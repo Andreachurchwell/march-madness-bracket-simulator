@@ -1,0 +1,17 @@
+[project]
+name = "march-madness-bracket-simulator"
+version = "0.1.0"
+description = "A March Madness bracket simulator using matchup-based features and Monte Carlo simulation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "matplotlib",
+    "streamlit",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -132,9 +132,21 @@ march-madness-bracket-simulator/
 ├── uv.lock
 └── .gitignore
 ```
-🚀 Getting Started
+
+## Environment Setup
+
+This project currently uses `uv` for dependency management.
+
+During the initial skeleton/setup phase, the project package layout is still being finalized, so install dependencies with:
+
+```bash
+mkdir -p .uv-cache
+export UV_CACHE_DIR="$PWD/.uv-cache"
+uv sync --no-install-project
+```
+<!-- ## 🚀 Getting Started
 1. Clone the repo
-git clone <your-repo-url>
+git clone https://github.com/Andreachurchwell/march-madness-bracket-simulator
 cd march-madness-bracket-simulator
 2. Create and sync the environment
 
@@ -143,7 +155,7 @@ If using uv:
 uv sync
 3. Run the project
 
-This section will be updated as the simulator and app are built.
+This section will be updated as the simulator and app are built. -->
 
 ## 💡 Why This Project?
 
