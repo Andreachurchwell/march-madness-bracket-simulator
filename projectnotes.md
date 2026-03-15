@@ -1,32 +1,20 @@
-# Project Notes
+## Day 1 Progress
 
-## Focus
-- Men's March Madness bracket simulator
-- Use historical NCAA data to build matchup-based predictions and simulate tournament outcomes
+### What I finished
+- Fixed the project package structure so `uv` works normally
+- Confirmed the `.venv` and notebook kernel are using the correct environment
+- Identified the core men's NCAA datasets for the simulator
+- Built working data loader functions for the main datasets
+- Built the first team-season feature table from regular season results
+- Created an initial Streamlit app shell for the project
 
-## Setup Status
-- `uv` environment is working
-- `.venv` is active
-- notebook kernel is using project `.venv`
-- package structure is under `src/march_madness_bracket_simulator/`
+### What I learned
+- `TeamID` and `Season` are the main join keys
+- `MNCAATourneySlots.csv` controls bracket progression across rounds
+- `MNCAATourneySeeds.csv` maps teams into the bracket structure
+- The regular season results can be used to build team strength features before the bracket is released
 
-## Core Datasets
-- `MTeams.csv`: team lookup table
-- `MRegularSeasonCompactResults.csv`: regular-season game results
-- `MNCAATourneyCompactResults.csv`: historical NCAA tournament results
-- `MNCAATourneySeeds.csv`: tournament seed assignments by season
-- `MNCAATourneySlots.csv`: bracket slot structure and round progression
-
-## What I Confirmed
-- `TeamID` is the team join key
-- `Season` is the season join key
-- regular season and tournament results share the same game structure
-- first-round slots are seed vs seed
-- later-round slots depend on winners of previous slots
-
-## Next Steps
-- Map seeds to team names for one sample season
-- Build team-season summary stats from regular season results
-- Create matchup-level features
-- Train a win probability model
-- Simulate the bracket
+### Next session
+- Merge team names and seeds into the feature table more cleanly
+- Start defining sleeper-team signals
+- Build matchup-level features for two teams in the same game
