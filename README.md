@@ -120,12 +120,14 @@ march-madness-bracket-simulator/
 ├── app/                  # Streamlit frontend (optional)
 ├── data/                 # Raw and cleaned datasets
 ├── notebooks/            # Exploration and experiments
-├── src/                  # Core project logic
-│   ├── data_loader.py
-│   ├── feature_engineering.py
-│   ├── model.py
-│   ├── simulator.py
-│   └── analysis.py
+├── src/
+│   └── march_madness_bracket_simulator/
+│       ├── data_loader.py
+│       ├── feature_engineering.py
+│       ├── model.py
+│       ├── simulator.py
+│       ├── analysis.py
+│       └── __init__.py
 ├── tests/                # Unit tests
 ├── README.md
 ├── pyproject.toml
@@ -137,25 +139,41 @@ march-madness-bracket-simulator/
 
 This project currently uses `uv` for dependency management.
 
-During the initial skeleton/setup phase, the project package layout is still being finalized, so install dependencies with:
+Create and sync the environment with:
 
 ```bash
 mkdir -p .uv-cache
 export UV_CACHE_DIR="$PWD/.uv-cache"
-uv sync --no-install-project
+uv sync
 ```
-<!-- ## 🚀 Getting Started
+
+Then activate the virtual environment:
+
+```bash
+source .venv/Scripts/activate
+```
+
+## 🚀 Getting Started
+
 1. Clone the repo
+
+```bash
 git clone https://github.com/Andreachurchwell/march-madness-bracket-simulator
 cd march-madness-bracket-simulator
+```
+
 2. Create and sync the environment
 
-If using uv:
-
+```bash
+mkdir -p .uv-cache
+export UV_CACHE_DIR="$PWD/.uv-cache"
 uv sync
-3. Run the project
+source .venv/Scripts/activate
+```
 
-This section will be updated as the simulator and app are built. -->
+3. Start exploring the data
+
+Begin in `notebooks/exploration.ipynb` or add loaders in `src/march_madness_bracket_simulator/data_loader.py`.
 
 ## 💡 Why This Project?
 
@@ -184,16 +202,11 @@ If we simulate the NCAA tournament over and over using matchup-based team featur
 This project is being built step by step, starting with:
 
 - project setup
-
+- men's NCAA data exploration
 - data collection
-
 - feature engineering
-
 - bracket simulation
-
 - analysis and frontend
-
-
 
 ## 👩‍💻 Author
 
