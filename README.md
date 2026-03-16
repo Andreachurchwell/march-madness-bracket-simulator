@@ -120,6 +120,21 @@ These features will be created for **all teams**, not just teams already viewed 
 
 ---
 
+## Data Source
+
+The main data for this project comes from the Kaggle dataset **`march-machine-learning-mania-2026`**. I am using it for team information, regular season results, historical tournament results, tournament seeds, and bracket slot structure.
+
+The main men's files used in this project include:
+- `MTeams.csv`
+- `MRegularSeasonCompactResults.csv`
+- `MNCAATourneyCompactResults.csv`
+- `MNCAATourneySeeds.csv`
+- `MNCAATourneySlots.csv`
+
+Because the live 2026 bracket needed to be worked into the project separately, I also created `bracket_2026.csv` to map the released tournament teams into the historical Kaggle data and current feature-engineering pipeline.
+
+---
+
 ## 📁 Project Structure
 
 ```bash
