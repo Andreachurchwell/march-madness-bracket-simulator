@@ -6,6 +6,10 @@
 
 <br>
 
+<img src="assets/logo.webp" alt="Project logo" width="180">
+
+<br><br>
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-Numerical%20Computing-013243?style=for-the-badge&logo=numpy&logoColor=white)
@@ -15,7 +19,6 @@
 
 <br><br>
 
-<img src="assets/logo.webp" alt="Project logo" width="170">
 <img src="assets/marchM.png" alt="March Madness graphic" width="420">
 
 </div>
