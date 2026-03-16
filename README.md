@@ -13,6 +13,11 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
 ![March Madness](https://img.shields.io/badge/NCAA-March%20Madness-blue?style=for-the-badge)
 
+<br><br>
+
+<img src="assets/logo.webp" alt="Project logo" width="170">
+<img src="assets/marchM.png" alt="March Madness graphic" width="420">
+
 </div>
 
 ---
