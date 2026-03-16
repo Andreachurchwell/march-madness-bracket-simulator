@@ -199,6 +199,13 @@ March Madness is one of the hardest events in sports to predict because the tour
 
 **That makes it the perfect setting for a project focused on probabilities, simulation, and pattern discovery instead of trying to guess one perfect bracket.**
 
+## Personal Motivation
+
+March is honestly one of my favorite months of the year. It is my mom's birthday month, and March Madness is something we both love. She always seems to do better than me on the bracket, and I still do not know if that is because she has way more experience, because she does not fall for underdogs the way I do, or because she is just lucky.
+
+That is a big part of why I wanted to make this project. I wanted to see if I could use data, feature engineering, and simulation to make smarter bracket decisions while still keeping the fun of trying to spot upsets and sleeper teams.
+
+
 ## 🏀 Main Question
 
 If we simulate the NCAA tournament over and over using matchup-based team features, which teams, upsets, and sleeper runs keep showing up?
