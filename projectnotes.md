@@ -85,3 +85,30 @@
 - Run Monte Carlo simulations across the bracket
 - Expand sleeper-team analysis based on prediction and simulation results
 
+## Day 4 Progress
+
+### What I finished
+- Restored the notebook environment after the kernel broke following `uv sync`
+- Added notebook dependencies back into `pyproject.toml`
+- Re-synced the environment and re-registered the project Jupyter kernel
+- Improved the Streamlit app so it shows the current 2026 round-1 baseline predictions
+- Added a more meaningful app view for closest games, underdog-style picks, and unresolved play-in rows
+
+### What I learned
+- If notebook dependencies are not tracked in `pyproject.toml`, `uv sync` can remove them from the project environment
+- The Streamlit app makes more sense when it shows one real output from the project instead of only placeholder sections
+- The current pipeline is strong enough to surface real first-round probabilities, but play-in handling and bracket advancement still need to be built
+
+### Current Project State
+- Team-season feature engineering is working
+- Historical matchup training data is built
+- Baseline logistic regression is working
+- 2026 round-1 predictions are working for non-play-in games
+- Streamlit now shows a useful baseline prediction view
+- Play-in logic and round advancement are still next
+
+### Next Steps
+- Handle the play-in teams
+- Build bracket advancement logic for round 2 and later rounds
+- Run Monte Carlo simulation across the full bracket
+

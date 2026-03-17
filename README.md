@@ -85,7 +85,7 @@ Rather than hardcoding “sleeper teams,” the model is designed to let them **
 - [X] Load the official NCAA tournament bracket
 - [X] Collect or import team-level season data
 - [X] Create matchup-based feature differences
-- [ ] Estimate win probabilities for games
+- [X] Estimate win probabilities for games
 - [ ] Simulate the bracket thousands of times
 - [ ] Analyze winners, deep runs, sleepers, and upset trends
 - [ ] Add a simple Streamlit frontend for viewing results
@@ -229,23 +229,24 @@ If we simulate the NCAA tournament over and over using matchup-based team featur
 
 ### 🚧 Current Progress
 
-This project is now past the initial setup stage and has moved into model preparation.
+This project is now past the setup stage and into baseline modeling and prediction.
 
 Completed so far:
 - project setup and package structure
-- men's NCAA data exploration
-- core data loaders
+- men's NCAA data loading
 - first team-season feature engineering
-- 2026 bracket team matching and cleaning
-- first-round matchup construction
-- historical matchup dataset construction for model training
+- 2026 bracket cleaning and team matching
+- historical tournament matchup dataset construction
+- baseline logistic regression model training
+- 2026 first-round baseline predictions for non-play-in games
+- Streamlit app shell with current project outputs
 
-Next steps:
-- train a baseline logistic regression model
-- generate matchup win probabilities
-- handle play-in winners
-- run Monte Carlo bracket simulations
-- expand sleeper-team analysis and app presentation
+Current next steps:
+- handle play-in teams
+- advance winners through later bracket rounds
+- run Monte Carlo tournament simulations
+- summarize champions, sleeper teams, and upset paths
+
 
 
 ## 👩‍💻 Author
