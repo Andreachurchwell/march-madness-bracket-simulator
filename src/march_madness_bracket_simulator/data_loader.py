@@ -37,6 +37,10 @@ def load_m_tourney_slots(data_dir: Path | None = None) -> pd.DataFrame:
     return _load_csv("MNCAATourneySlots.csv", data_dir)
 
 
+def load_bracket_2026(data_dir: Path | None = None) -> pd.DataFrame:
+    return _load_csv("bracket_2026.csv", data_dir)
+
+
 def load_core_march_madness_data(data_dir: Path | None = None) -> dict[str, pd.DataFrame]:
     return {
         "teams": load_m_teams(data_dir),
@@ -44,5 +48,5 @@ def load_core_march_madness_data(data_dir: Path | None = None) -> dict[str, pd.D
         "tourney": load_m_tourney_results(data_dir),
         "seeds": load_m_tourney_seeds(data_dir),
         "slots": load_m_tourney_slots(data_dir),
+        "bracket_2026": load_bracket_2026(data_dir),
     }
-

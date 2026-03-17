@@ -14,6 +14,8 @@ Once the teams were matched, I started turning games into matchup rows. Instead 
 
 For the model, I used logistic regression as a baseline. I built historical matchup rows from past NCAA tournament games, using a neutral ordering for team A and team B so the model would not be biased by always putting the winner first. I trained the model on those historical matchup differences and used `team_a_won` as the target label.
 
+The baseline logistic regression currently uses four matchup-difference features: win percentage difference, average points scored difference, average points allowed difference, and scoring margin difference.
+
 The baseline model got about 69% accuracy on held-out historical tournament games, with a log loss of about 0.58. I think that is a pretty solid starting point because it shows the current features already contain useful predictive signal.
 
 After training the model, I applied it to the 2026 first-round matchups that were fully resolved. That gave me round 1 win probabilities and predicted winners. The model also surfaced a few upset-style picks, which is important because one of the main goals of the project is to identify possible sleepers and underdogs instead of just following the bracket seeds.
