@@ -1,0 +1,21 @@
+## Project Walkthrough Script
+
+This project is a men's March Madness bracket simulator. The main goal is to use historical NCAA data, feature engineering, logistic regression, and eventually Monte Carlo simulation to predict matchups, identify possible sleeper teams, and simulate bracket outcomes.
+
+The main dataset I used comes from the Kaggle dataset `march-machine-learning-mania-2026`. From that dataset, I focused on the men's files for teams, regular season results, tournament results, tournament seeds, and bracket slots. I also created my own `bracket_2026.csv` file from the released bracket so I could match the current tournament teams into the project.
+
+The first thing I did was make sure the project setup worked, including the virtual environment, notebook kernel, and package structure. After that, I explored the Kaggle files to understand what each dataset was for and what keys I would need to join them together. The main join keys I ended up using were `TeamID` and `Season`.
+
+From there, I built a team-season feature table using regular season results. The first features I created were wins, losses, win percentage, average points scored, average points allowed, and average scoring margin. Then I merged in team names and tournament seeds so the feature table was easier to read and use.
+
+After that, I cleaned the 2026 bracket teams and matched them to Kaggle team IDs. Some team names did not match exactly, so I had to normalize a few names manually. I also separated out the play-in rows because those were not final single-team entries yet.
+
+Once the teams were matched, I started turning games into matchup rows. Instead of just looking at one team by itself, I built feature differences between two teams, like win percentage difference, points for difference, points against difference, and scoring margin difference. That gave me one row per matchup, which is the structure I needed for modeling.
+
+For the model, I used logistic regression as a baseline. I built historical matchup rows from past NCAA tournament games, using a neutral ordering for team A and team B so the model would not be biased by always putting the winner first. I trained the model on those historical matchup differences and used `team_a_won` as the target label.
+
+The baseline model got about 69% accuracy on held-out historical tournament games, with a log loss of about 0.58. I think that is a pretty solid starting point because it shows the current features already contain useful predictive signal.
+
+After training the model, I applied it to the 2026 first-round matchups that were fully resolved. That gave me round 1 win probabilities and predicted winners. The model also surfaced a few upset-style picks, which is important because one of the main goals of the project is to identify possible sleepers and underdogs instead of just following the bracket seeds.
+
+Right now, the main things left are handling the play-in games, building the bracket advancement logic for later rounds, and then using Monte Carlo simulation to run the full tournament many times. Once that is done, I want to summarize likely winners, Final Four odds, upset paths, and sleeper teams, and then present that more cleanly in the app.
