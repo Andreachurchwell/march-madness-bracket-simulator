@@ -48,10 +48,40 @@
 - Historical training rows are built
 - Next major step is training the first logistic regression baseline
 
-### Next session
-- Split the historical matchup dataset into train/test sets
-- Train a baseline logistic regression model
-- Evaluate model performance
-- Apply the model to 2026 first-round matchup rows
-- Later handle play-in winners and full bracket simulation
+## Day 3 Progress
+
+### What I finished
+- Built a historical tournament matchup training dataset from past NCAA tournament games
+- Converted historical tournament games into neutral team-vs-team rows with a valid binary target column `team_a_won`
+- Trained a baseline logistic regression model using matchup feature differences
+- Evaluated the baseline model on a held-out test set
+- Applied the trained model to the 2026 first-round bracket matchups
+- Generated first-round win probabilities and predicted winners for the non-play-in games
+- Identified some early upset-style and sleeper-style picks from the model output
+
+### Baseline Model Result
+- Accuracy: about `0.69`
+- Log loss: about `0.58`
+
+### What I learned
+- The current feature set already contains real predictive signal
+- A simple logistic regression baseline is enough to produce meaningful first-round probabilities
+- Historical tournament games can be turned into a usable supervised learning dataset with neutral team ordering
+- The model is already surfacing possible upset picks where the lower-seeded or less expected team has a stronger probability than I might expect from seed alone
+
+### Current Project State
+- Setup is working
+- Core men's data is loaded
+- Team-season feature engineering is working
+- 2026 bracket teams are matched
+- Historical training data is built
+- Baseline model is trained
+- 2026 round 1 predictions are generated
+
+### Next Steps
+- Clean up and summarize the first-round prediction outputs
+- Handle the play-in matchups that were skipped
+- Build bracket advancement logic for later rounds
+- Run Monte Carlo simulations across the bracket
+- Expand sleeper-team analysis based on prediction and simulation results
 
