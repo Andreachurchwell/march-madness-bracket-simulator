@@ -112,3 +112,35 @@
 - Build bracket advancement logic for round 2 and later rounds
 - Run Monte Carlo simulation across the full bracket
 
+## Day 5 Progress
+
+### What I finished
+- Updated the 2026 bracket after one play-in result was finalized
+- Confirmed that only 2 unresolved play-in rows remain in `bracket_2026.csv`
+- Rebuilt the first-round matchup pipeline with the updated bracket
+- Learned how to advance winners from one round to the next using `TeamID` instead of relying only on display names
+- Built and scored later-round matchups for the East region through the regional final
+- Built and scored later-round matchups for the West region through the regional final
+
+### Regional Results So Far
+- East champion: `Duke`
+- West champion: `Gonzaga`
+
+### What I learned
+- Round 1 can look simpler because the teams are still directly tied to the cleaned bracket table, but later rounds need `TeamID` to be carried forward or the pipeline falls back into team-name matching problems
+- `TeamID` is the more reliable identifier for bracket advancement than display names
+- Once winners carry their seeds and `TeamID`, the same modeling pattern can be reused for round 2, round 3, and the regional final
+- Some model picks feel more intuitive than others, which is a useful reminder that this is still a baseline model and not a finished simulator
+
+### Current Project State
+- East region is fully advanced and scored
+- West region is fully advanced and scored
+- South and Midwest are still waiting on the remaining play-in teams
+- The bracket advancement pattern is now understood well enough to repeat for the rest of the tournament
+
+### Next Steps
+- Update the bracket once the last 2 play-in games are finalized
+- Build and score the South and Midwest regions
+- Build the Final Four and championship matchups
+- Move toward full Monte Carlo simulation once the full bracket flow is in place
+
