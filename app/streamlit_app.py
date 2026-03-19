@@ -2,6 +2,7 @@ import base64
 from pathlib import Path
 from textwrap import dedent
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 from sklearn.linear_model import LogisticRegression
@@ -17,14 +18,13 @@ from march_madness_bracket_simulator.simulator import simulate_full_tournament_o
 
 
 st.set_page_config(
-    page_title="March Madness Bracket Simulator",
+    page_title="Andrea's Bracket Breakdown",
     page_icon="🏀",
     layout="wide",
 )
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
-LOGO_PATH = ASSETS_DIR / "logo.webp"
-HERO_PATH = ASSETS_DIR / "marchM.png"
+LOGO_PATH = ASSETS_DIR / "abb-logo.svg"
 TEAM_LOGO_MAP = {
     "Akron": ASSETS_DIR / "akron.png",
     "Alabama": ASSETS_DIR / "bama.png",
@@ -118,19 +118,6 @@ def apply_styles() -> None:
                 padding: 1.2rem 1.4rem;
                 box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
             }
-            .hero-banner {
-                display: grid;
-                grid-template-columns: minmax(0, 1.3fr) auto;
-                gap: 1rem;
-                align-items: center;
-            }
-            .hero-image {
-                max-height: 84px;
-                width: auto;
-                opacity: 0.9;
-                justify-self: end;
-                filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
-            }
             .hero-title {
                 font-size: 2.2rem;
                 font-weight: 800;
@@ -209,6 +196,27 @@ def apply_styles() -> None:
                 text-transform: uppercase;
                 letter-spacing: 0.12em;
                 margin-bottom: 0.4rem;
+            }
+            .panel-head {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 0.7rem;
+            }
+            .panel-logo {
+                width: 34px;
+                height: 34px;
+                object-fit: contain;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.92);
+                padding: 0.22rem;
+                flex: 0 0 auto;
+            }
+            .inline-logo-pair {
+                display: flex;
+                align-items: center;
+                gap: 0.45rem;
+                margin-bottom: 0.8rem;
             }
             .mini-list {
                 color: #cbd5e1;
@@ -361,6 +369,23 @@ def apply_styles() -> None:
                 width: 26px;
                 height: 26px;
                 object-fit: contain;
+            }
+            .stButton > button {
+                background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+                color: #eff6ff;
+                border: 1px solid rgba(147, 197, 253, 0.35);
+                border-radius: 12px;
+                font-weight: 700;
+                box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18);
+            }
+            .stButton > button:hover {
+                background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+                color: #ffffff;
+                border-color: rgba(191, 219, 254, 0.55);
+            }
+            .stButton > button:focus:not(:active) {
+                border-color: rgba(191, 219, 254, 0.65);
+                color: #ffffff;
             }
             .ff-meta {
                 color: #cbd5e1;
@@ -635,6 +660,26 @@ def render_metric_card(label: str, value: str, team_name: str | None = None) -> 
     ).strip()
 
 
+def render_logo_panel(
+    title: str,
+    label: str,
+    body: str,
+    teams: list[str],
+) -> str:
+    logos = "".join(team_logo_html(team, css_class="panel-logo") for team in teams)
+    logo_row = f'<div class="inline-logo-pair">{logos}</div>' if logos else ""
+    return dedent(
+        f"""
+        <div class="panel-card">
+            <div class="section-label">{label}</div>
+            {logo_row}
+            <h3 style="margin-top:0;color:#f8fafc;">{title}</h3>
+            <p style="color:#cbd5e1; margin-bottom:0;">{body}</p>
+        </div>
+        """
+    ).strip()
+
+
 def render_odds_chart(champion_odds: pd.DataFrame) -> None:
     rows = []
     max_pct = float(champion_odds["championship_odds_pct"].max()) if not champion_odds.empty else 1.0
@@ -662,6 +707,72 @@ def render_odds_chart(champion_odds: pd.DataFrame) -> None:
         """).strip(),
         unsafe_allow_html=True,
     )
+
+
+def render_seed_odds_chart(champion_odds: pd.DataFrame) -> None:
+    chart_data = champion_odds.copy()
+    chart = (
+        alt.Chart(chart_data)
+        .mark_circle(opacity=0.85, stroke="#dbeafe", strokeWidth=1)
+        .encode(
+            x=alt.X("seed:Q", title="Seed"),
+            y=alt.Y("championship_odds_pct:Q", title="Title Odds (%)"),
+            size=alt.Size("championship_odds_pct:Q", legend=None),
+            color=alt.Color("region:N", legend=alt.Legend(title="Region")),
+            tooltip=["team", "seed", "region", "championship_odds_pct"],
+        )
+        .properties(height=280, background="#121926")
+        .configure_view(strokeWidth=0)
+        .configure_axis(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+            gridColor="rgba(148,163,184,0.15)",
+            domainColor="rgba(148,163,184,0.25)",
+            tickColor="rgba(148,163,184,0.25)",
+        )
+        .configure_legend(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+        )
+        .configure_title(color="#f8fafc")
+    )
+    st.altair_chart(chart, width="stretch", theme=None)
+
+
+def render_upset_watch_chart(round1_predictions: pd.DataFrame) -> None:
+    chart_data = (
+        round1_predictions.sort_values("favorite_win_prob")
+        .head(8)
+        .assign(
+            matchup=lambda df: df["team_a"] + " vs " + df["team_b"],
+            upset_window_pct=lambda df: ((1 - df["favorite_win_prob"]) * 100).round(1),
+        )
+    )
+    chart = (
+        alt.Chart(chart_data)
+        .mark_bar(cornerRadiusEnd=5)
+        .encode(
+            x=alt.X("upset_window_pct:Q", title="Upset Window (%)"),
+            y=alt.Y("matchup:N", sort="-x", title=None),
+            color=alt.Color("region:N", legend=alt.Legend(title="Region")),
+            tooltip=["region", "matchup", "favorite", "favorite_win_prob", "predicted_winner", "upset_window_pct"],
+        )
+        .properties(height=300, background="#121926")
+        .configure_view(strokeWidth=0)
+        .configure_axis(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+            gridColor="rgba(148,163,184,0.15)",
+            domainColor="rgba(148,163,184,0.25)",
+            tickColor="rgba(148,163,184,0.25)",
+        )
+        .configure_legend(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+        )
+        .configure_title(color="#f8fafc")
+    )
+    st.altair_chart(chart, width="stretch", theme=None)
 
 
 def prepare_bracket_features(
@@ -1118,16 +1229,13 @@ def main() -> None:
         dedent(
             f"""
             <div class="hero-card">
-                <div class="hero-banner">
-                    <div>
-                        <div class="section-label">Bracket Dashboard</div>
-                        <div class="hero-title">March Madness Bracket Simulator</div>
-                        <p class="hero-subtitle">
-                            A cleaner view of the project: one deterministic bracket, one Monte Carlo picture,
-                            and the teams the model thinks matter most.
-                        </p>
-                    </div>
-                    {"<img src='data:image/png;base64," + base64.b64encode(HERO_PATH.read_bytes()).decode("ascii") + "' class='hero-image' alt='March Madness banner' />" if HERO_PATH.exists() else ""}
+                <div>
+                    <div class="section-label">Bracket Dashboard</div>
+                    <div class="hero-title">Andrea's Bracket Breakdown</div>
+                    <p class="hero-subtitle">
+                        A cleaner view of the project: one deterministic bracket, one Monte Carlo picture,
+                        and the teams the model thinks matter most.
+                    </p>
                 </div>
             </div>
             """
@@ -1210,18 +1318,26 @@ def main() -> None:
     insights_left, insights_center, insights_right = st.columns(3)
 
     with insights_left:
-        panel(
-            "Baseline vs Simulation",
-            "Key Takeaway",
-            f"The deterministic bracket champion is {deterministic_bracket['champion']}, but the most common simulated champion is {simulation_favorite['team']} at about {simulation_favorite['championship_odds_pct']}%.",
+        st.markdown(
+            render_logo_panel(
+                "Baseline vs Simulation",
+                "Key Takeaway",
+                f"The deterministic bracket champion is {deterministic_bracket['champion']}, but the most common simulated champion is {simulation_favorite['team']} at about {simulation_favorite['championship_odds_pct']}%.",
+                [deterministic_bracket["champion"], simulation_favorite["team"]],
+            ),
+            unsafe_allow_html=True,
         )
 
     with insights_center:
         sleeper_region = f" from the {sleeper_pick['region']} region" if pd.notna(sleeper_pick.get("region")) else ""
-        panel(
-            "Sleeper Signal",
-            "Watch List",
-            f"{sleeper_pick['team']} is a lower-seeded team{sleeper_region} that still shows up with meaningful title odds in the current simulation output.",
+        st.markdown(
+            render_logo_panel(
+                "Sleeper Signal",
+                "Watch List",
+                f"{sleeper_pick['team']} is a lower-seeded team{sleeper_region} that still shows up with meaningful title odds in the current simulation output.",
+                [sleeper_pick["team"]],
+            ),
+            unsafe_allow_html=True,
         )
 
     with insights_right:
@@ -1239,11 +1355,12 @@ def main() -> None:
             st.session_state["sim_champion"] = sim_champion
 
         sim_champion = st.session_state.get("sim_champion", "Not run yet")
-        panel(
-            "One Random Run",
-            "Interactive",
-            f"Use the button to sample one random tournament path. Current simulated champion: {sim_champion}.",
-        )
+        sim_teams = [] if sim_champion == "Not run yet" else [sim_champion]
+        st.markdown('<div class="section-label">Interactive</div>', unsafe_allow_html=True)
+        if sim_teams:
+            render_featured_team_chips(sim_teams)
+        st.markdown("### One Random Run")
+        st.write(f"Use the button to sample one random tournament path. Current simulated champion: {sim_champion}.")
 
     st.write("")
 
@@ -1259,26 +1376,20 @@ def main() -> None:
 
     with odds_right:
         panel(
-            "Top 10 Championship Odds",
-            "Simulation Table",
-            "The chart gives the shape quickly. This table keeps the exact percentages, seeds, and regions visible.",
+            "Title Odds By Seed",
+            "Simulation Chart",
+            "This view shows where the strongest title paths sit across seeds and regions, which makes it easier to spot both contenders and overperforming teams.",
         )
-        st.dataframe(champion_odds, width="stretch", hide_index=True)
+        render_seed_odds_chart(champion_odds)
 
     st.write("")
 
     panel(
         "Round 1 Upset Watch",
         "Useful Extra",
-        "This is the one raw table worth keeping in the app: the least certain first-round games and the underdog-style spots the model is most willing to entertain.",
+        "These are the round-1 games where the favorite is most vulnerable, so this is the quickest place to look for toss-ups and upset chances.",
     )
-    st.dataframe(
-        round1_predictions.sort_values("favorite_win_prob").head(8)[
-            ["region", "team_a", "seed_a", "team_b", "seed_b", "favorite", "favorite_win_prob", "predicted_winner"]
-        ],
-        width="stretch",
-        hide_index=True,
-    )
+    render_upset_watch_chart(round1_predictions)
 
 
 if __name__ == "__main__":
