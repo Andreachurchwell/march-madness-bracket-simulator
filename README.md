@@ -1,20 +1,40 @@
+<div align="center">
+
 # Andrea's Bracket Breakdown
 
-March Madness bracket simulation project using historical NCAA data, matchup-based feature engineering, logistic regression, and Monte Carlo simulation.
+### March Madness bracket prediction, simulation, and upset analysis
+
+<br>
+
+<img src="assets/abb-logo.svg" alt="Andrea's Bracket Breakdown logo" width="220">
+
+<br><br>
+
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-Data-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-Computing-013243?style=for-the-badge&logo=numpy&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+
+</div>
+
+---
 
 ## Overview
 
-This project predicts NCAA tournament games in two ways:
+Andrea's Bracket Breakdown is a men's March Madness project built to compare two ways of reading the tournament:
 
-- a **deterministic baseline bracket** that always advances the higher-probability team
-- a **Monte Carlo simulation view** that runs the full tournament many times and estimates how often different outcomes happen
+- a **deterministic bracket** that always advances the higher-probability team
+- a **Monte Carlo simulation view** that runs the full tournament many times and measures which outcomes happen most often
 
-The goal is not just to pick one bracket. The project is meant to answer questions like:
+The goal is not just to pick one bracket. It is to understand:
 
-- Who is the most likely national champion?
-- Which teams reach the Final Four most often?
-- Which lower-seeded teams look dangerous?
-- Which first-round games are the most upset-prone?
+- who is most likely to win the title
+- which teams reach later rounds most often
+- which lower-seeded teams overperform expectations
+- where the best upset opportunities appear
+
+---
 
 ## Data
 
@@ -22,7 +42,7 @@ Main source:
 
 - Kaggle `march-machine-learning-mania-2026`
 
-Main men's files used:
+Men's files used:
 
 - `MTeams.csv`
 - `MRegularSeasonCompactResults.csv`
@@ -34,7 +54,9 @@ Project-specific bracket file:
 
 - `data/raw/bracket_2026.csv`
 
-## Current Model
+---
+
+## Model
 
 The baseline model is a logistic regression trained on historical NCAA tournament matchups.
 
@@ -45,14 +67,16 @@ Current matchup-difference features:
 - `points_against_diff`
 - `scoring_margin_diff`
 
-Baseline held-out performance:
+Held-out baseline performance:
 
 - Accuracy: about `0.69`
 - Log loss: about `0.58`
 
+---
+
 ## Current Results
 
-Deterministic bracket:
+### Deterministic Bracket
 
 - East champion: `Duke`
 - West champion: `Gonzaga`
@@ -60,7 +84,9 @@ Deterministic bracket:
 - Midwest champion: `Michigan`
 - National champion: `Michigan`
 
-Monte Carlo summary from `1000` full tournament simulations:
+### Monte Carlo Title Odds
+
+From `1000` full tournament simulations:
 
 - `Duke`: about `17.5%`
 - `Gonzaga`: about `14.0%`
@@ -69,21 +95,25 @@ Monte Carlo summary from `1000` full tournament simulations:
 - `Iowa St.`: about `6.8%`
 - `Saint Louis`: about `6.2%`
 
-This is one of the main takeaways of the project: the deterministic bracket picked `Michigan`, but the most common simulated champion was `Duke`.
+One of the main project takeaways is that the deterministic bracket picked `Michigan`, while the most common simulated champion was `Duke`.
+
+---
 
 ## App
 
-The Streamlit app now shows:
+The Streamlit app currently shows:
 
 - a deterministic bracket view
 - a consensus simulation Final Four view
-- championship odds from Monte Carlo simulation
+- championship odds
 - round-1 upset watch
 - one random tournament run
 
 Branding:
 
 - **Andrea's Bracket Breakdown**
+
+---
 
 ## Project Structure
 
@@ -109,15 +139,17 @@ march-madness-bracket-simulator/
 \- uv.lock
 ```
 
+---
+
 ## Setup
 
-Using `uv`:
+Sync the environment:
 
 ```bash
 uv sync
 ```
 
-Activate the environment:
+Activate it:
 
 ```bash
 source .venv/Scripts/activate
@@ -135,12 +167,16 @@ Run the app:
 streamlit run app/streamlit_app.py
 ```
 
+---
+
 ## Next Steps
 
 - add Final Four odds and regional win odds
-- define sleeper teams more explicitly using simulation outputs
-- keep improving the app layout and bracket presentation
-- record a walkthrough video
+- define sleeper teams more explicitly from simulation results
+- keep refining the app layout and bracket presentation
+- record a project walkthrough video
+
+---
 
 ## Author
 
