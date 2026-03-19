@@ -144,3 +144,45 @@
 - Build the Final Four and championship matchups
 - Move toward full Monte Carlo simulation once the full bracket flow is in place
 
+
+## Day 6 Progress
+
+### What I finished
+- Updated the bracket after the last play-in games were resolved
+- Rebuilt the full 2026 first round with all 32 matchups
+- Built and scored the South region through the regional final
+- Built and scored the Midwest region through the regional final
+- Built and scored the Final Four matchups
+- Built and scored the national championship game
+- Completed the first full end-to-end bracket path using the baseline model
+
+### Regional Champions
+- East: `Duke`
+- West: `Gonzaga`
+- South: `Florida`
+- Midwest: `Michigan`
+
+### Final Four Results
+- `Gonzaga` over `Florida`
+- `Michigan` over `Duke`
+
+### National Champion
+- `Michigan`
+
+### What I learned
+- The bracket advancement logic works best when winner `TeamID` is carried forward instead of relying only on team names
+- Once the round-by-round pattern is established, the same modeling workflow can be reused all the way through the championship
+- The current project now supports a full deterministic baseline bracket path, which is the foundation needed before Monte Carlo simulation
+
+### Current Project State
+- Full 2026 bracket is resolved
+- All four regions are advanced through their regional finals
+- Final Four and championship logic are working
+- The project now has a full baseline bracket prediction from start to finish
+- Monte Carlo simulation is the next major step
+
+### Next Steps
+- Add Monte Carlo simulation across the full bracket
+- Estimate championship, Final Four, and deep-run probabilities
+- Identify the teams that most often outperform their seed
+- Improve the presentation of results in the app and notebook
