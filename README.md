@@ -6,7 +6,7 @@
 
 <br>
 
-<img src="assets/abb-logo.svg" alt="Andrea's Bracket Breakdown logo" width="220">
+<img src="assets/marchM.png" alt="March Madness graphic" width="220">
 
 <br><br>
 
