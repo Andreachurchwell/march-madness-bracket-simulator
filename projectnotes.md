@@ -154,35 +154,42 @@
 - Built and scored the Midwest region through the regional final
 - Built and scored the Final Four matchups
 - Built and scored the national championship game
-- Completed the first full end-to-end bracket path using the baseline model
+- Completed the first full deterministic bracket path using the baseline model
+- Built a reusable Monte Carlo region simulation function
+- Built a reusable full tournament simulation function
+- Ran 100 full tournament simulations as an initial test
+- Ran 1000 full tournament simulations to estimate national championship odds
 
-### Regional Champions
-- East: `Duke`
-- West: `Gonzaga`
-- South: `Florida`
-- Midwest: `Michigan`
+### Full Baseline Bracket Result
+- East champion: `Duke`
+- West champion: `Gonzaga`
+- South champion: `Florida`
+- Midwest champion: `Michigan`
+- Final Four winners: `Gonzaga` and `Michigan`
+- Deterministic national champion: `Michigan`
 
-### Final Four Results
-- `Gonzaga` over `Florida`
-- `Michigan` over `Duke`
-
-### National Champion
-- `Michigan`
+### 1000-Simulation Championship Odds Highlights
+- `Duke`: about `17.5%`
+- `Gonzaga`: about `14.0%`
+- `Michigan`: about `13.7%`
+- `Arizona`: about `10.1%`
+- `Iowa St.`: about `6.8%`
+- `Saint Louis`: about `6.2%`
 
 ### What I learned
-- The bracket advancement logic works best when winner `TeamID` is carried forward instead of relying only on team names
-- Once the round-by-round pattern is established, the same modeling workflow can be reused all the way through the championship
-- The current project now supports a full deterministic baseline bracket path, which is the foundation needed before Monte Carlo simulation
+- Carrying `TeamID` forward through every round is what made later-round matchup rebuilding and simulation possible
+- A deterministic bracket path is useful, but Monte Carlo gives a more realistic picture of how often different outcomes happen
+- The most common champion in simulation does not have to match the deterministic bracket winner
+- The simulation results already show some sleeper-style outcomes that are not obvious from seeds alone
 
 ### Current Project State
-- Full 2026 bracket is resolved
-- All four regions are advanced through their regional finals
+- Full bracket progression is working
 - Final Four and championship logic are working
-- The project now has a full baseline bracket prediction from start to finish
-- Monte Carlo simulation is the next major step
+- Monte Carlo simulation is working
+- National title odds can now be estimated from repeated tournament simulations
 
 ### Next Steps
-- Add Monte Carlo simulation across the full bracket
-- Estimate championship, Final Four, and deep-run probabilities
-- Identify the teams that most often outperform their seed
-- Improve the presentation of results in the app and notebook
+- Summarize Final Four odds and other deep-run probabilities
+- Decide whether to increase the simulation count beyond 1000
+- Add some of the Monte Carlo outputs into Streamlit
+- Clean up the notebook and script so the project story is easier to present

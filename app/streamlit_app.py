@@ -1,11 +1,19 @@
+import base64
 from pathlib import Path
+from textwrap import dedent
 
 import pandas as pd
 import streamlit as st
 from sklearn.linear_model import LogisticRegression
 
+from march_madness_bracket_simulator.analysis import (
+    simulate_consensus_bracket,
+    simulate_tournament_champions,
+    summarize_champion_odds,
+)
 from march_madness_bracket_simulator.data_loader import load_core_march_madness_data
 from march_madness_bracket_simulator.feature_engineering import build_team_season_features
+from march_madness_bracket_simulator.simulator import simulate_full_tournament_once
 
 
 st.set_page_config(
@@ -17,6 +25,40 @@ st.set_page_config(
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.webp"
 HERO_PATH = ASSETS_DIR / "marchM.png"
+TEAM_LOGO_MAP = {
+    "Akron": ASSETS_DIR / "akron.png",
+    "Alabama": ASSETS_DIR / "bama.png",
+    "Arizona": ASSETS_DIR / "arizona.png",
+    "Arkansas": ASSETS_DIR / "arkansas.png",
+    "BYU": ASSETS_DIR / "byu.png",
+    "Duke": ASSETS_DIR / "duke.png",
+    "Florida": ASSETS_DIR / "florida.png",
+    "Gonzaga": ASSETS_DIR / "gonzaga.png",
+    "High Point": ASSETS_DIR / "highpoint.png",
+    "Houston": ASSETS_DIR / "houston.png",
+    "Illinois": ASSETS_DIR / "illinois.png",
+    "Iowa": ASSETS_DIR / "iowa.png",
+    "Iowa St.": ASSETS_DIR / "iowastate.png",
+    "Kansas": ASSETS_DIR / "kansas.png",
+    "Louisville": ASSETS_DIR / "louisville.png",
+    "Miami (FL)": ASSETS_DIR / "miami.png",
+    "Miami OH": ASSETS_DIR / "miamioh.png",
+    "Michigan": ASSETS_DIR / "michigan.png",
+    "Michigan St.": ASSETS_DIR / "mstate.png",
+    "Nebraska": ASSETS_DIR / "nebraska.png",
+    "Purdue": ASSETS_DIR / "purdue.png",
+    "Saint Mary's": ASSETS_DIR / "stmary.png",
+    "Saint Louis": ASSETS_DIR / "stlouis.png",
+    "Santa Clara": ASSETS_DIR / "santaclara.png",
+    "St. John's": ASSETS_DIR / "stjohns.png",
+    "TCU": ASSETS_DIR / "tcu.png",
+    "UCLA": ASSETS_DIR / "ucla.png",
+    "UConn": ASSETS_DIR / "uconn.png",
+    "Utah St.": ASSETS_DIR / "utah.png",
+    "Vanderbilt": ASSETS_DIR / "vandy.png",
+    "VCU": ASSETS_DIR / "vcu.png",
+    "Virginia": ASSETS_DIR / "virginia.png",
+}
 
 FIRST_ROUND_PAIRS = [
     (1, 16),
@@ -35,6 +77,8 @@ FEATURE_COLS = [
     "points_against_diff",
     "scoring_margin_diff",
 ]
+SECOND_ROUND_PAIRS = [(0, 1), (2, 3), (4, 5), (6, 7)]
+MONTE_CARLO_SIMULATIONS = 1000
 
 BRACKET_NAME_MAP = {
     "Ole Miss": "Mississippi",
@@ -45,6 +89,7 @@ BRACKET_NAME_MAP = {
     "McNeese": "McNeese St",
     "Saint Mary's": "St Mary's CA",
     "Long Island": "LIU Brooklyn",
+    "PVAMU": "Prairie View",
     "Utah St.": "Utah St",
     "Kennesaw St.": "Kennesaw",
     "Miami (FL)": "Miami FL",
@@ -73,6 +118,19 @@ def apply_styles() -> None:
                 padding: 1.2rem 1.4rem;
                 box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
             }
+            .hero-banner {
+                display: grid;
+                grid-template-columns: minmax(0, 1.3fr) auto;
+                gap: 1rem;
+                align-items: center;
+            }
+            .hero-image {
+                max-height: 84px;
+                width: auto;
+                opacity: 0.9;
+                justify-self: end;
+                filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
+            }
             .hero-title {
                 font-size: 2.2rem;
                 font-weight: 800;
@@ -96,6 +154,55 @@ def apply_styles() -> None:
                 font-size: 1.8rem;
                 font-weight: 700;
             }
+            .metric-top {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin-bottom: 0.55rem;
+            }
+            .metric-logo {
+                width: 34px;
+                height: 34px;
+                object-fit: contain;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.92);
+                padding: 0.22rem;
+                flex: 0 0 auto;
+            }
+            .odds-list {
+                display: grid;
+                gap: 0.75rem;
+            }
+            .odds-row {
+                display: grid;
+                grid-template-columns: minmax(180px, 0.9fr) 1.8fr 64px;
+                gap: 0.8rem;
+                align-items: center;
+            }
+            .odds-team {
+                display: flex;
+                align-items: center;
+                gap: 0.55rem;
+                color: #f8fafc;
+                font-weight: 700;
+            }
+            .odds-bar {
+                height: 12px;
+                border-radius: 999px;
+                background: rgba(30, 41, 59, 0.9);
+                overflow: hidden;
+                border: 1px solid rgba(148, 163, 184, 0.12);
+            }
+            .odds-bar-fill {
+                height: 100%;
+                border-radius: 999px;
+                background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%);
+            }
+            .odds-pct {
+                color: #cbd5e1;
+                font-size: 0.9rem;
+                text-align: right;
+            }
             .section-label {
                 color: #93c5fd;
                 font-size: 0.8rem;
@@ -108,6 +215,161 @@ def apply_styles() -> None:
                 margin: 0;
                 padding-left: 1.1rem;
                 line-height: 1.7;
+            }
+            .bracket-board {
+                display: grid;
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+                gap: 1rem;
+                align-items: start;
+            }
+            .bracket-column {
+                background: rgba(16, 24, 38, 0.82);
+                border: 1px solid rgba(148, 163, 184, 0.20);
+                border-radius: 18px;
+                padding: 1rem;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+            }
+            .bracket-heading {
+                color: #93c5fd;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                margin-bottom: 0.75rem;
+            }
+            .bracket-region {
+                color: #f8fafc;
+                font-size: 1.15rem;
+                font-weight: 700;
+                margin-bottom: 0.75rem;
+            }
+            .bracket-subhead {
+                color: #94a3b8;
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin: 1rem 0 0.45rem 0;
+            }
+            .matchup-card {
+                background: rgba(30, 41, 59, 0.78);
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                border-radius: 14px;
+                padding: 0.7rem 0.8rem;
+                margin-bottom: 0.55rem;
+            }
+            .matchup-winner {
+                color: #f8fafc;
+                font-weight: 700;
+                font-size: 0.98rem;
+                line-height: 1.35;
+            }
+            .matchup-meta {
+                color: #cbd5e1;
+                font-size: 0.82rem;
+                margin-top: 0.2rem;
+            }
+            .champion-card {
+                background: linear-gradient(180deg, rgba(37, 99, 235, 0.28), rgba(15, 23, 42, 0.88));
+                border: 1px solid rgba(147, 197, 253, 0.32);
+            }
+            .bracket-center {
+                align-self: stretch;
+            }
+            .ff-wrap {
+                display: grid;
+                gap: 1rem;
+            }
+            .ff-top {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                align-items: start;
+            }
+            .ff-bottom {
+                display: grid;
+                grid-template-columns: 1fr 0.8fr;
+                gap: 1rem;
+                align-items: start;
+            }
+            .ff-col {
+                display: grid;
+                gap: 1rem;
+            }
+            .ff-stage {
+                background: rgba(16, 24, 38, 0.82);
+                border: 1px solid rgba(148, 163, 184, 0.20);
+                border-radius: 18px;
+                padding: 1rem;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+            }
+            .ff-label {
+                color: #93c5fd;
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                margin-bottom: 0.75rem;
+            }
+            .ff-matchup {
+                background: rgba(30, 41, 59, 0.82);
+                border: 1px solid rgba(148, 163, 184, 0.14);
+                border-radius: 14px;
+                padding: 0.8rem;
+                margin-bottom: 0.7rem;
+            }
+            .ff-team {
+                color: #f8fafc;
+                font-size: 1rem;
+                font-weight: 700;
+                line-height: 1.35;
+            }
+            .ff-team-row {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+            }
+            .ff-team-inline {
+                color: #f8fafc;
+                font-size: 1rem;
+                font-weight: 700;
+                line-height: 1.35;
+                display: inline-block;
+            }
+            .ff-team-logo {
+                width: 28px;
+                height: 28px;
+                object-fit: contain;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.92);
+                padding: 0.18rem;
+                flex: 0 0 auto;
+            }
+            .team-chip-wrap {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                margin-top: 0.9rem;
+            }
+            .team-chip {
+                display: flex;
+                align-items: center;
+                gap: 0.55rem;
+                background: rgba(30, 41, 59, 0.82);
+                border: 1px solid rgba(148, 163, 184, 0.16);
+                border-radius: 999px;
+                padding: 0.5rem 0.8rem;
+            }
+            .team-chip img {
+                width: 26px;
+                height: 26px;
+                object-fit: contain;
+            }
+            .ff-meta {
+                color: #cbd5e1;
+                font-size: 0.82rem;
+                margin-top: 0.2rem;
+            }
+            .ff-title {
+                background: linear-gradient(180deg, rgba(37, 99, 235, 0.32), rgba(15, 23, 42, 0.92));
+                border: 1px solid rgba(147, 197, 253, 0.35);
             }
             div[data-testid="stDataFrame"] {
                 border: 1px solid rgba(148, 163, 184, 0.18);
@@ -129,6 +391,275 @@ def panel(title: str, label: str, body: str) -> None:
             <p style="color:#cbd5e1; margin-bottom:0;">{body}</p>
         </div>
         """,
+        unsafe_allow_html=True,
+    )
+
+
+def team_logo_html(team_name: str, css_class: str = "ff-team-logo") -> str:
+    logo_path = TEAM_LOGO_MAP.get(team_name)
+    if logo_path is None or not logo_path.exists():
+        return ""
+    encoded = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+    suffix = logo_path.suffix.lower().lstrip(".") or "png"
+    mime_type = "image/png" if suffix == "png" else "image/webp"
+    return f'<img src="data:{mime_type};base64,{encoded}" class="{css_class}" alt="{team_name} logo" />'
+
+
+def _render_matchup_cards(matchups: list[dict[str, object]], champion: bool = False) -> str:
+    cards = []
+    extra_class = " champion-card" if champion else ""
+    for matchup in matchups:
+        meta = []
+        if matchup.get("seed") is not None:
+            meta.append(f"Seed {matchup['seed']}")
+        if matchup.get("probability") is not None:
+            meta.append(f"{matchup['probability']:.1%} win prob")
+        meta_html = " · ".join(meta)
+        cards.append(
+            dedent(
+                f"""
+                <div class="matchup-card{extra_class}">
+                    <div class="ff-team-row">{team_logo_html(matchup['team'])}<span class="matchup-winner">{matchup['team']}</span></div>
+                    <div class="matchup-meta">{meta_html}</div>
+                </div>
+                """
+            ).strip()
+        )
+    return "".join(cards)
+
+
+def render_bracket_board(
+    bracket_data: dict[str, object],
+    winner_field: str,
+    seed_field: str,
+    probability_field: str,
+) -> None:
+    regions = bracket_data["regions"]
+    final_four = bracket_data["final_four"]
+    championship = bracket_data["championship"]
+
+    def region_block(region_name: str) -> str:
+        region_data = regions[region_name]
+        round1_cards = [
+            {
+                "team": row[winner_field],
+                "seed": int(row[seed_field]) if pd.notna(row[seed_field]) else None,
+                "probability": float(row[probability_field]),
+            }
+            for _, row in region_data["round1"].iterrows()
+        ]
+        round2_cards = [
+            {"team": row[winner_field], "seed": int(row[seed_field]) if pd.notna(row[seed_field]) else None, "probability": float(row[probability_field])}
+            for _, row in region_data["round2"].iterrows()
+        ]
+        round3_cards = [
+            {"team": row[winner_field], "seed": int(row[seed_field]) if pd.notna(row[seed_field]) else None, "probability": float(row[probability_field])}
+            for _, row in region_data["round3"].iterrows()
+        ]
+        final_card = [
+            {
+                "team": region_data["final"].iloc[0][winner_field],
+                "seed": int(region_data["final"].iloc[0][seed_field]) if pd.notna(region_data["final"].iloc[0][seed_field]) else None,
+                "probability": float(region_data["final"].iloc[0][probability_field]),
+            }
+        ]
+        return dedent(
+            f"""
+            <div class="bracket-column">
+                <div class="bracket-heading">Deterministic Path</div>
+                <div class="bracket-region">{region_name}</div>
+                <div class="bracket-subhead">Round 1 Winners</div>
+                {_render_matchup_cards(round1_cards)}
+                <div class="bracket-subhead">Round 2 Winners</div>
+                {_render_matchup_cards(round2_cards)}
+                <div class="bracket-subhead">Round 3 Winners</div>
+                {_render_matchup_cards(round3_cards)}
+                <div class="bracket-subhead">Regional Champion</div>
+                {_render_matchup_cards(final_card, champion=True)}
+            </div>
+            """
+        ).strip()
+
+    final_four_cards = [
+        {
+            "team": row[winner_field],
+            "seed": int(row[seed_field]) if pd.notna(row[seed_field]) else None,
+            "probability": float(row[probability_field]),
+        }
+        for _, row in final_four.iterrows()
+    ]
+    championship_card = [
+        {
+            "team": championship.iloc[0][winner_field],
+            "seed": int(championship.iloc[0][seed_field]) if pd.notna(championship.iloc[0][seed_field]) else None,
+            "probability": float(championship.iloc[0][probability_field]),
+        }
+    ]
+
+    board_html = dedent(
+        f"""
+        <div class="bracket-board">
+            {region_block("East")}
+            {region_block("South")}
+            <div class="bracket-column bracket-center">
+                <div class="bracket-heading">Finish</div>
+                <div class="bracket-region">Final Four</div>
+                {_render_matchup_cards(final_four_cards)}
+                <div class="bracket-subhead">National Champion</div>
+                {_render_matchup_cards(championship_card, champion=True)}
+            </div>
+            {region_block("West")}
+            {region_block("Midwest")}
+        </div>
+        """
+    ).strip()
+    st.markdown(board_html, unsafe_allow_html=True)
+
+
+def render_final_four_bracket(
+    bracket_data: dict[str, object],
+    winner_field: str,
+    probability_field: str,
+    title: str,
+    label: str,
+) -> None:
+    final_four = bracket_data["final_four"]
+    championship = bracket_data["championship"]
+
+    left = final_four.iloc[0]
+    right = final_four.iloc[1]
+    champ = championship.iloc[0]
+
+    def _seed_text(row: pd.Series, key: str) -> str:
+        value = row.get(key)
+        return str(int(value)) if pd.notna(value) else "-"
+
+    html = dedent(
+        f"""
+        <div class="panel-card">
+            <div class="section-label">{label}</div>
+            <h3 style="margin-top:0;color:#f8fafc;">{title}</h3>
+            <div class="ff-wrap">
+                <div class="ff-top">
+                    <div class="ff-stage">
+                        <div class="ff-label">Semifinal 1</div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(left['team_a'])}<span class="ff-team-inline">{left['team_a']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(left, 'seed_a')}</div>
+                        </div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(left['team_b'])}<span class="ff-team-inline">{left['team_b']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(left, 'seed_b')}</div>
+                        </div>
+                        <div class="ff-matchup ff-title">
+                            <div class="ff-team-row">{team_logo_html(left[winner_field])}<span class="ff-team-inline">{left[winner_field]}</span></div>
+                            <div class="ff-meta">Advanced with {left[probability_field]:.1%}</div>
+                        </div>
+                    </div>
+                    <div class="ff-stage">
+                        <div class="ff-label">Semifinal 2</div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(right['team_a'])}<span class="ff-team-inline">{right['team_a']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(right, 'seed_a')}</div>
+                        </div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(right['team_b'])}<span class="ff-team-inline">{right['team_b']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(right, 'seed_b')}</div>
+                        </div>
+                        <div class="ff-matchup ff-title">
+                            <div class="ff-team-row">{team_logo_html(right[winner_field])}<span class="ff-team-inline">{right[winner_field]}</span></div>
+                            <div class="ff-meta">Advanced with {right[probability_field]:.1%}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ff-bottom">
+                    <div class="ff-stage">
+                        <div class="ff-label">Championship</div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(champ['team_a'])}<span class="ff-team-inline">{champ['team_a']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(champ, 'seed_a')}</div>
+                        </div>
+                        <div class="ff-matchup">
+                            <div class="ff-team-row">{team_logo_html(champ['team_b'])}<span class="ff-team-inline">{champ['team_b']}</span></div>
+                            <div class="ff-meta">Seed {_seed_text(champ, 'seed_b')}</div>
+                        </div>
+                    </div>
+                    <div class="ff-stage">
+                        <div class="ff-label">Champion</div>
+                        <div class="ff-matchup ff-title">
+                            <div class="ff-team-row">{team_logo_html(champ[winner_field])}<span class="ff-team-inline">{champ[winner_field]}</span></div>
+                            <div class="ff-meta">Champion at {champ[probability_field]:.1%}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    ).strip()
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_featured_team_chips(teams: list[str]) -> None:
+    chips = []
+    for team in teams:
+        chips.append(
+            dedent(
+                f"""
+                <div class="team-chip">
+                    {team_logo_html(team, css_class="ff-team-logo")}
+                    <span>{team}</span>
+                </div>
+                """
+            ).strip()
+        )
+    st.markdown(
+        dedent(f"""
+        <div class="team-chip-wrap">{"".join(chips)}</div>
+        """).strip(),
+        unsafe_allow_html=True,
+    )
+
+
+def render_metric_card(label: str, value: str, team_name: str | None = None) -> str:
+    logo_html = team_logo_html(team_name, css_class="metric-logo") if team_name else ""
+    return dedent(
+        f"""
+        <div class="panel-card">
+            <div class="metric-top">
+                {logo_html}
+                <div class="metric-label">{label}</div>
+            </div>
+            <div class="metric-value">{value}</div>
+        </div>
+        """
+    ).strip()
+
+
+def render_odds_chart(champion_odds: pd.DataFrame) -> None:
+    rows = []
+    max_pct = float(champion_odds["championship_odds_pct"].max()) if not champion_odds.empty else 1.0
+    for _, row in champion_odds.iterrows():
+        fill_pct = (float(row["championship_odds_pct"]) / max_pct * 100) if max_pct else 0
+        rows.append(
+            dedent(
+                f"""
+                <div class="odds-row">
+                    <div class="odds-team">
+                        {team_logo_html(row['team'])}
+                        <span>{row['team']}</span>
+                    </div>
+                    <div class="odds-bar">
+                        <div class="odds-bar-fill" style="width:{fill_pct:.1f}%;"></div>
+                    </div>
+                    <div class="odds-pct">{row['championship_odds_pct']:.1f}%</div>
+                </div>
+                """
+            ).strip()
+        )
+    st.markdown(
+        dedent(f"""
+        <div class="odds-list">{"".join(rows)}</div>
+        """).strip(),
         unsafe_allow_html=True,
     )
 
@@ -248,7 +779,7 @@ def build_round1_predictions(
     data: dict[str, pd.DataFrame],
     team_features: pd.DataFrame,
     bracket_2026: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, LogisticRegression, pd.DataFrame, pd.DataFrame]:
     _, bracket_with_features = prepare_bracket_features(
         bracket_2026, data["teams"], team_features
     )
@@ -306,7 +837,188 @@ def build_round1_predictions(
     round1_predictions["team_b_win_prob"] = round1_predictions["team_b_win_prob"].round(3)
     round1_predictions["favorite_win_prob"] = round1_predictions["favorite_win_prob"].round(3)
 
-    return round1_predictions, historical_matchups
+    return round1_predictions, historical_matchups, model, bracket_with_features, first_round_2026
+
+
+def build_round1_id_tables(
+    first_round_2026: pd.DataFrame,
+    bracket_with_features: pd.DataFrame,
+) -> dict[str, pd.DataFrame]:
+    team_lookup = bracket_with_features[["region", "seed", "team", "TeamID"]].copy()
+    region_tables: dict[str, pd.DataFrame] = {}
+
+    for region_name in ["East", "West", "South", "Midwest"]:
+        region_round1 = first_round_2026[first_round_2026["region"] == region_name].copy()
+        region_round1 = region_round1.merge(
+            team_lookup.rename(
+                columns={"team": "team_a", "seed": "seed_a", "TeamID": "team_a_id"}
+            ),
+            on=["region", "team_a", "seed_a"],
+            how="left",
+        )
+        region_round1 = region_round1.merge(
+            team_lookup.rename(
+                columns={"team": "team_b", "seed": "seed_b", "TeamID": "team_b_id"}
+            ),
+            on=["region", "team_b", "seed_b"],
+            how="left",
+        )
+        region_tables[region_name] = region_round1
+
+    return region_tables
+
+
+def _attach_features_for_round(matchup_df: pd.DataFrame, features_latest: pd.DataFrame) -> pd.DataFrame:
+    matchup_df = matchup_df.merge(
+        features_latest.add_prefix("team_a_"),
+        left_on="team_a_id",
+        right_on="team_a_TeamID",
+        how="left",
+    )
+    matchup_df = matchup_df.merge(
+        features_latest.add_prefix("team_b_"),
+        left_on="team_b_id",
+        right_on="team_b_TeamID",
+        how="left",
+    )
+    matchup_df["win_pct_diff"] = matchup_df["team_a_win_pct"] - matchup_df["team_b_win_pct"]
+    matchup_df["points_for_diff"] = matchup_df["team_a_avg_points_for"] - matchup_df["team_b_avg_points_for"]
+    matchup_df["points_against_diff"] = matchup_df["team_a_avg_points_against"] - matchup_df["team_b_avg_points_against"]
+    matchup_df["scoring_margin_diff"] = (
+        matchup_df["team_a_avg_scoring_margin"] - matchup_df["team_b_avg_scoring_margin"]
+    )
+    return matchup_df
+
+
+def _score_deterministic_round(
+    matchup_df: pd.DataFrame,
+    features_latest: pd.DataFrame,
+    model: LogisticRegression,
+) -> pd.DataFrame:
+    matchup_df = _attach_features_for_round(matchup_df.copy(), features_latest)
+    X_round = matchup_df[FEATURE_COLS]
+    matchup_df["team_a_win_prob"] = model.predict_proba(X_round)[:, 1]
+    matchup_df["team_b_win_prob"] = 1 - matchup_df["team_a_win_prob"]
+    matchup_df["predicted_winner"] = matchup_df.apply(
+        lambda row: row["team_a"] if row["team_a_win_prob"] >= 0.5 else row["team_b"],
+        axis=1,
+    )
+    matchup_df["winner_seed"] = matchup_df.apply(
+        lambda row: row["seed_a"] if row["predicted_winner"] == row["team_a"] else row["seed_b"],
+        axis=1,
+    )
+    matchup_df["winner_team_id"] = matchup_df.apply(
+        lambda row: row["team_a_id"] if row["predicted_winner"] == row["team_a"] else row["team_b_id"],
+        axis=1,
+    )
+    return matchup_df
+
+
+def _build_next_round_rows(previous_round: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict] = []
+    for idx in range(0, len(previous_round), 2):
+        game_a = previous_round.iloc[idx]
+        game_b = previous_round.iloc[idx + 1]
+        rows.append(
+            {
+                "team_a": game_a["predicted_winner"],
+                "seed_a": game_a["winner_seed"],
+                "team_a_id": game_a["winner_team_id"],
+                "team_b": game_b["predicted_winner"],
+                "seed_b": game_b["winner_seed"],
+                "team_b_id": game_b["winner_team_id"],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def build_deterministic_region_summary(
+    region_round1_ids: pd.DataFrame,
+    features_latest: pd.DataFrame,
+    model: LogisticRegression,
+) -> dict[str, pd.DataFrame | str]:
+    round1 = region_round1_ids.copy()
+    round1["predicted_winner"] = round1.apply(
+        lambda row: row["team_a"] if row["team_a_win_prob"] >= 0.5 else row["team_b"],
+        axis=1,
+    )
+    round1["winner_seed"] = round1.apply(
+        lambda row: row["seed_a"] if row["predicted_winner"] == row["team_a"] else row["seed_b"],
+        axis=1,
+    )
+    round1["winner_team_id"] = round1.apply(
+        lambda row: row["team_a_id"] if row["predicted_winner"] == row["team_a"] else row["team_b_id"],
+        axis=1,
+    )
+
+    round2 = _score_deterministic_round(_build_next_round_rows(round1), features_latest, model)
+    round3 = _score_deterministic_round(_build_next_round_rows(round2), features_latest, model)
+    final = _score_deterministic_round(_build_next_round_rows(round3), features_latest, model)
+
+    return {
+        "round1": round1,
+        "round2": round2,
+        "round3": round3,
+        "final": final,
+        "champion": final.iloc[0]["predicted_winner"],
+        "champion_seed": int(final.iloc[0]["winner_seed"]),
+        "champion_team_id": int(final.iloc[0]["winner_team_id"]),
+    }
+
+
+def build_deterministic_bracket_summary(
+    round1_id_tables: dict[str, pd.DataFrame],
+    features_latest: pd.DataFrame,
+    model: LogisticRegression,
+) -> dict[str, object]:
+    east = build_deterministic_region_summary(round1_id_tables["East"], features_latest, model)
+    west = build_deterministic_region_summary(round1_id_tables["West"], features_latest, model)
+    south = build_deterministic_region_summary(round1_id_tables["South"], features_latest, model)
+    midwest = build_deterministic_region_summary(round1_id_tables["Midwest"], features_latest, model)
+
+    final_four = pd.DataFrame(
+        [
+            {
+                "team_a": south["champion"],
+                "seed_a": south["champion_seed"],
+                "team_a_id": south["champion_team_id"],
+                "team_b": west["champion"],
+                "seed_b": west["champion_seed"],
+                "team_b_id": west["champion_team_id"],
+            },
+            {
+                "team_a": east["champion"],
+                "seed_a": east["champion_seed"],
+                "team_a_id": east["champion_team_id"],
+                "team_b": midwest["champion"],
+                "seed_b": midwest["champion_seed"],
+                "team_b_id": midwest["champion_team_id"],
+            },
+        ]
+    )
+    final_four = _score_deterministic_round(final_four, features_latest, model)
+    championship = _score_deterministic_round(_build_next_round_rows(final_four), features_latest, model)
+
+    return {
+        "regions": {
+            "East": east,
+            "West": west,
+            "South": south,
+            "Midwest": midwest,
+        },
+        "final_four": final_four,
+        "championship": championship,
+        "champion": championship.iloc[0]["predicted_winner"],
+    }
+
+
+def annotate_champion_odds(champion_odds: pd.DataFrame, bracket_2026: pd.DataFrame) -> pd.DataFrame:
+    seed_lookup = (
+        bracket_2026[~bracket_2026["is_play_in"]][["team", "seed", "region"]]
+        .drop_duplicates()
+        .rename(columns={"team": "team"})
+    )
+    return champion_odds.merge(seed_lookup, on="team", how="left")
 
 
 @st.cache_data
@@ -322,199 +1034,251 @@ def load_app_data():
     bracket_2026 = data["bracket_2026"].copy()
     bracket_2026["is_play_in"] = bracket_2026["team"].str.contains("/", regex=False)
 
-    round1_predictions, historical_matchups = build_round1_predictions(
+    round1_predictions, historical_matchups, model, bracket_with_features, first_round_2026 = build_round1_predictions(
         data, team_features, bracket_2026
     )
+    round1_id_tables = build_round1_id_tables(first_round_2026, bracket_with_features)
+    latest_season = int(team_features["Season"].max())
+    features_latest = team_features[team_features["Season"] == latest_season].copy()
+    deterministic_bracket = build_deterministic_bracket_summary(
+        round1_id_tables,
+        features_latest,
+        model,
+    )
+    consensus_bracket = simulate_consensus_bracket(
+        round1_id_tables["East"],
+        round1_id_tables["West"],
+        round1_id_tables["South"],
+        round1_id_tables["Midwest"],
+        features_latest,
+        FEATURE_COLS,
+        model,
+        SECOND_ROUND_PAIRS,
+        n_simulations=MONTE_CARLO_SIMULATIONS,
+        random_seed=42,
+    )
+    champion_counts = simulate_tournament_champions(
+        round1_id_tables["East"],
+        round1_id_tables["West"],
+        round1_id_tables["South"],
+        round1_id_tables["Midwest"],
+        features_latest,
+        FEATURE_COLS,
+        model,
+        SECOND_ROUND_PAIRS,
+        n_simulations=MONTE_CARLO_SIMULATIONS,
+        random_seed=42,
+    )
+    champion_odds = annotate_champion_odds(
+        summarize_champion_odds(champion_counts, top_n=10),
+        bracket_2026,
+    )
 
-    return data, team_features, bracket_2026, round1_predictions, historical_matchups
+    return (
+        data,
+        team_features,
+        bracket_2026,
+        round1_predictions,
+        historical_matchups,
+        deterministic_bracket,
+        consensus_bracket,
+        champion_odds,
+        round1_id_tables,
+        features_latest,
+        model,
+    )
 
 
 def main() -> None:
     apply_styles()
-    data, team_features, bracket_2026, round1_predictions, historical_matchups = load_app_data()
-
-    latest_season = int(team_features["Season"].max())
-    latest_features = team_features[team_features["Season"] == latest_season].copy()
-    latest_features = latest_features.sort_values("avg_scoring_margin", ascending=False)
-    play_in_rows = bracket_2026[bracket_2026["is_play_in"]].copy()
-    resolved_rows = bracket_2026[~bracket_2026["is_play_in"]].copy()
-    _, bracket_with_features = prepare_bracket_features(bracket_2026, data["teams"], team_features)
-    top_2026 = bracket_with_features.sort_values("avg_scoring_margin", ascending=False)
+    (
+        _data,
+        _team_features,
+        bracket_2026,
+        round1_predictions,
+        _historical_matchups,
+        deterministic_bracket,
+        consensus_bracket,
+        champion_odds,
+        round1_id_tables,
+        features_latest,
+        model,
+    ) = load_app_data()
 
     with st.sidebar:
         if LOGO_PATH.exists():
             st.image(str(LOGO_PATH), width=170)
         st.markdown("### What This App Shows")
-        st.markdown("- Current 2026 bracket input")
-        st.markdown("- Baseline round-1 predictions")
-        st.markdown("- Closest games and underdog leans")
-        st.markdown("- Unresolved play-in rows")
+        st.markdown("- Deterministic bracket board")
+        st.markdown("- 1000-simulation title odds")
+        st.markdown("- Sleeper and takeaway cards")
+        st.markdown("- One random tournament run")
 
     st.markdown(
-        """
-        <div class="hero-card">
-            <div class="section-label">Project Shell</div>
-            <div class="hero-title">March Madness Bracket Simulator</div>
-            <p class="hero-subtitle">
-                A simple app view for the project as it exists right now: bracket input,
-                baseline model output, and unresolved play-in status.
-            </p>
-        </div>
-        """,
+        dedent(
+            f"""
+            <div class="hero-card">
+                <div class="hero-banner">
+                    <div>
+                        <div class="section-label">Bracket Dashboard</div>
+                        <div class="hero-title">March Madness Bracket Simulator</div>
+                        <p class="hero-subtitle">
+                            A cleaner view of the project: one deterministic bracket, one Monte Carlo picture,
+                            and the teams the model thinks matter most.
+                        </p>
+                    </div>
+                    {"<img src='data:image/png;base64," + base64.b64encode(HERO_PATH.read_bytes()).decode("ascii") + "' class='hero-image' alt='March Madness banner' />" if HERO_PATH.exists() else ""}
+                </div>
+            </div>
+            """
+        ),
         unsafe_allow_html=True,
     )
 
-    if HERO_PATH.exists():
-        hero_left, hero_center, hero_right = st.columns([0.24, 0.52, 0.24])
-        with hero_center:
-            st.image(str(HERO_PATH), use_container_width=True)
-
     st.write("")
+
+    simulation_favorite = champion_odds.iloc[0]
+    sleeper_candidates = champion_odds[champion_odds["seed"].fillna(0) >= 8]
+    sleeper_pick = sleeper_candidates.iloc[0] if not sleeper_candidates.empty else champion_odds.iloc[min(1, len(champion_odds) - 1)]
 
     col1, col2, col3, col4 = st.columns(4)
     metrics = [
-        ("Resolved Teams", f"{resolved_rows.shape[0]}"),
-        ("Play-In Rows", f"{play_in_rows.shape[0]}"),
-        ("Training Matchups", f"{historical_matchups.shape[0]:,}"),
-        ("Round 1 Predictions", f"{round1_predictions.shape[0]}"),
+        ("Baseline Champion", f"{deterministic_bracket['champion']}", deterministic_bracket["champion"]),
+        ("Sim Favorite", f"{simulation_favorite['team']}", simulation_favorite["team"]),
+        ("Top Odds", f"{simulation_favorite['championship_odds_pct']}%", simulation_favorite["team"]),
+        ("Sleeper Pick", f"{sleeper_pick['team']}", sleeper_pick["team"]),
     ]
-    for col, (label, value) in zip([col1, col2, col3, col4], metrics):
-        col.markdown(
-            f"""
-            <div class="panel-card">
-                <div class="metric-label">{label}</div>
-                <div class="metric-value">{value}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+    for col, (label, value, team_name) in zip([col1, col2, col3, col4], metrics):
+        col.markdown(render_metric_card(label, value, team_name=team_name), unsafe_allow_html=True)
+
+    st.write("")
+
+    render_featured_team_chips(["Duke", "Florida", "Gonzaga", "Saint Louis"])
+
+    st.write("")
+
+    ff_left, ff_right = st.columns(2)
+
+    with ff_left:
+        render_final_four_bracket(
+            deterministic_bracket,
+            winner_field="predicted_winner",
+            probability_field="team_a_win_prob",
+            title="Baseline Final Four Bracket",
+            label="Before Monte Carlo",
+        )
+
+    with ff_right:
+        render_final_four_bracket(
+            consensus_bracket,
+            winner_field="consensus_winner",
+            probability_field="consensus_share",
+            title="Consensus Simulation Final Four",
+            label="After 1000 Simulations",
         )
 
     st.write("")
 
-    top_left, top_right = st.columns([1.15, 1])
+    panel(
+        "Deterministic Bracket",
+        "Before Monte Carlo",
+        "This board shows the single baseline tournament path when the higher-probability team advances in every game.",
+    )
+    render_bracket_board(
+        deterministic_bracket,
+        winner_field="predicted_winner",
+        seed_field="winner_seed",
+        probability_field="team_a_win_prob",
+    )
 
-    with top_left:
+    st.write("")
+
+    panel(
+        "Consensus Simulation Bracket",
+        "After 1000 Simulations",
+        "This board shows the team that advanced most often in each bracket slot across the 1000 Monte Carlo runs.",
+    )
+    render_bracket_board(
+        consensus_bracket,
+        winner_field="consensus_winner",
+        seed_field="consensus_seed",
+        probability_field="consensus_share",
+    )
+
+    st.write("")
+
+    insights_left, insights_center, insights_right = st.columns(3)
+
+    with insights_left:
         panel(
-            "2026 Bracket Input",
-            "Current Focus",
-            "This is the current tournament field being fed into the project. Play-in "
-            "rows are still separated because they do not represent finalized teams yet.",
-        )
-        st.dataframe(
-            bracket_2026[["region", "seed", "team", "is_play_in"]],
-            use_container_width=True,
-            hide_index=True,
+            "Baseline vs Simulation",
+            "Key Takeaway",
+            f"The deterministic bracket champion is {deterministic_bracket['champion']}, but the most common simulated champion is {simulation_favorite['team']} at about {simulation_favorite['championship_odds_pct']}%.",
         )
 
-    with top_right:
-        st.markdown(
-            """
-            <div class="panel-card">
-                <div class="section-label">Baseline Model</div>
-                <h3 style="margin-top:0;color:#f8fafc;">Current Feature Set</h3>
-                <ul class="mini-list">
-                    <li><code>win_pct_diff</code></li>
-                    <li><code>points_for_diff</code></li>
-                    <li><code>points_against_diff</code></li>
-                    <li><code>scoring_margin_diff</code></li>
-                </ul>
-                <p style="color:#cbd5e1; margin-bottom:0;">
-                    These are the matchup-difference features currently used in the
-                    baseline logistic regression model.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.write("")
+    with insights_center:
+        sleeper_region = f" from the {sleeper_pick['region']} region" if pd.notna(sleeper_pick.get("region")) else ""
         panel(
-            "What This Means",
-            "App Context",
-            "This app is not the full simulator yet. Right now it is mainly a clearer "
-            "way to see the current bracket input, the baseline model output, and "
-            "which pieces still need to be finished.",
+            "Sleeper Signal",
+            "Watch List",
+            f"{sleeper_pick['team']} is a lower-seeded team{sleeper_region} that still shows up with meaningful title odds in the current simulation output.",
+        )
+
+    with insights_right:
+        if st.button("Run One Simulated Tournament"):
+            sim_champion = simulate_full_tournament_once(
+                round1_id_tables["East"],
+                round1_id_tables["West"],
+                round1_id_tables["South"],
+                round1_id_tables["Midwest"],
+                features_latest,
+                FEATURE_COLS,
+                model,
+                SECOND_ROUND_PAIRS,
+            )
+            st.session_state["sim_champion"] = sim_champion
+
+        sim_champion = st.session_state.get("sim_champion", "Not run yet")
+        panel(
+            "One Random Run",
+            "Interactive",
+            f"Use the button to sample one random tournament path. Current simulated champion: {sim_champion}.",
         )
 
     st.write("")
 
-    predictions_left, predictions_right = st.columns([1.3, 1])
+    odds_left, odds_right = st.columns([1.15, 1])
 
-    with predictions_left:
+    with odds_left:
         panel(
-            "2026 Round 1 Baseline Predictions",
-            "Current Output",
-            "These are the non-play-in first-round predictions generated by the same "
-            "baseline logistic regression workflow you built in the notebook.",
+            "Monte Carlo Championship Odds",
+            "After 1000 Simulations",
+            "These are the top title odds from repeated full-tournament simulations. This is the probability view that sits next to the single deterministic bracket.",
         )
-        st.dataframe(round1_predictions, use_container_width=True, hide_index=True)
+        render_odds_chart(champion_odds)
 
-    with predictions_right:
+    with odds_right:
         panel(
-            "Closest First-Round Games",
-            "Upset Watch",
-            "These are the least certain round-1 games by favorite win probability. "
-            "They are the natural places to look first for toss-ups and upset cases.",
+            "Top 10 Championship Odds",
+            "Simulation Table",
+            "The chart gives the shape quickly. This table keeps the exact percentages, seeds, and regions visible.",
         )
-        st.dataframe(
-            round1_predictions.sort_values("favorite_win_prob").head(8),
-            use_container_width=True,
-            hide_index=True,
-        )
-
-        st.write("")
-        panel(
-            "Underdog-Style Picks",
-            "Model Leans",
-            "These are the games where the model currently picks the team on the "
-            "right side of the matchup row.",
-        )
-        st.dataframe(
-            round1_predictions[round1_predictions["underdog_pick"]],
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.dataframe(champion_odds, width="stretch", hide_index=True)
 
     st.write("")
 
-    bottom_left, bottom_right = st.columns([1.2, 1])
-
-    with bottom_left:
-        panel(
-            "Current 2026 Teams by Scoring Margin",
-            "Quick Read",
-            "A simple latest-season view of bracket teams sorted by scoring margin. "
-            "This is a lightweight way to spot strong profiles before full simulation.",
-        )
-        st.dataframe(
-            top_2026[
-                [
-                    "team",
-                    "seed",
-                    "wins",
-                    "losses",
-                    "win_pct",
-                    "avg_points_for",
-                    "avg_points_against",
-                    "avg_scoring_margin",
-                ]
-            ],
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    with bottom_right:
-        panel(
-            "Unresolved Play-In Rows",
-            "Still Pending",
-            "These rows still need explicit play-in handling before the full 2026 "
-            "bracket can be advanced round by round in the app.",
-        )
-        st.dataframe(
-            play_in_rows[["region", "seed", "team"]],
-            use_container_width=True,
-            hide_index=True,
-        )
+    panel(
+        "Round 1 Upset Watch",
+        "Useful Extra",
+        "This is the one raw table worth keeping in the app: the least certain first-round games and the underdog-style spots the model is most willing to entertain.",
+    )
+    st.dataframe(
+        round1_predictions.sort_values("favorite_win_prob").head(8)[
+            ["region", "team_a", "seed_a", "team_b", "seed_b", "favorite", "favorite_win_prob", "predicted_winner"]
+        ],
+        width="stretch",
+        hide_index=True,
+    )
 
 
 if __name__ == "__main__":
