@@ -193,3 +193,37 @@
 - Decide whether to increase the simulation count beyond 1000
 - Add some of the Monte Carlo outputs into Streamlit
 - Clean up the notebook and script so the project story is easier to present
+
+## Day 7 Progress
+
+### What I finished
+- Moved the reusable Monte Carlo logic out of the notebook and into the project package
+- Added simulation helpers to `simulator.py` and summary helpers to `analysis.py`
+- Added tests for regional simulation, full-tournament simulation, and consensus bracket aggregation
+- Verified the package code with `pytest`
+- Updated the Streamlit app so it now shows:
+  - a deterministic bracket view
+  - a consensus simulation Final Four view
+  - championship odds from 1000 simulations
+  - a round-1 upset watch chart
+  - a one-click random tournament run
+- Added team logo assets and wired them into the app
+- Rebranded the app to `Andrea's Bracket Breakdown`
+
+### What I learned
+- The notebook was the right place to discover the logic, but reusable simulation code belongs in the package
+- A deterministic bracket and a Monte Carlo view are more useful together than either one by itself
+- Streamlit can communicate the model well, but it looks much better when the app focuses on insights instead of dumping raw tables
+- Team logos and branding make a noticeable difference in how polished the project feels
+
+### Current Project State
+- The notebook contains the full research and development path
+- The package now contains reusable simulation and analysis functions
+- The app now communicates the main project outputs instead of only showing exploratory tables
+- The project can now show both a baseline bracket and a simulation-based interpretation of the tournament
+
+### Next Steps
+- Summarize Final Four odds and regional win odds, not just championship odds
+- Define sleeper teams more explicitly using simulation outputs
+- Keep refining the app layout so it feels more intentional and less like a notebook port
+- Record a walkthrough video using the updated script and app

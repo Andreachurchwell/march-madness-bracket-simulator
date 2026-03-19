@@ -1,37 +1,43 @@
 ## Project Walkthrough Script
 
-This project is a men's March Madness bracket simulator. The main goal is to use historical NCAA data, feature engineering, logistic regression, and eventually Monte Carlo simulation to predict matchups, identify possible sleeper teams, and simulate bracket outcomes.
+This project is called **Andrea's Bracket Breakdown**. It is a men's March Madness bracket simulator built with historical NCAA data, feature engineering, logistic regression, and Monte Carlo simulation.
 
-The main dataset I used comes from the Kaggle dataset `march-machine-learning-mania-2026`. From that dataset, I focused on the men's files for teams, regular season results, tournament results, tournament seeds, and bracket slots. I also created my own `bracket_2026.csv` file from the released bracket so I could match the current tournament teams into the project.
+The main dataset comes from the Kaggle dataset `march-machine-learning-mania-2026`. From that dataset, I used the men's team file, regular season results, historical tournament results, tournament seeds, and bracket slots. I also created my own `bracket_2026.csv` file so I could map the current tournament field into the project.
 
-The first thing I did was make sure the project setup worked, including the virtual environment, notebook kernel, and package structure. After that, I explored the Kaggle files to understand what each dataset was for and what keys I would need to join them together. The main join keys I ended up using were `TeamID` and `Season`.
+The first thing I did was make sure the environment, package structure, and notebook setup all worked. After that, I explored the Kaggle files to understand what each one was doing and what keys I would need to join them together. The main join keys I ended up using were `TeamID` and `Season`.
 
-From there, I built a team-season feature table using regular season results. The first features I created were wins, losses, win percentage, average points scored, average points allowed, and average scoring margin. Then I merged in team names so the feature table was easier to read and use.
+From there, I built a team-season feature table using regular season results. The main features I created were wins, losses, win percentage, average points scored, average points allowed, and average scoring margin. Then I merged team names into that table so it was easier to read and use.
 
-After that, I cleaned the 2026 bracket teams and matched them to Kaggle team IDs. Some team names did not match exactly, so I had to normalize a few names manually. I also separated out the play-in rows until those games were resolved.
+After that, I cleaned the 2026 bracket teams and matched them to Kaggle team IDs. Some team names did not match exactly, so I had to normalize several names manually. Once the teams were matched, I started turning games into matchup rows by building feature differences between the two teams in each game.
 
-Once the teams were matched, I started turning games into matchup rows. Instead of just looking at one team by itself, I built feature differences between two teams, like win percentage difference, points for difference, points against difference, and scoring margin difference. That gave me one row per matchup, which is the structure I needed for modeling.
-
-For the model, I used logistic regression as a baseline. I built historical matchup rows from past NCAA tournament games, using a neutral ordering for team A and team B so the model would not be biased by always putting the winner first. I trained the model on those historical matchup differences and used `team_a_won` as the target label.
-
-The baseline logistic regression currently uses four matchup-difference features:
+For the model, I used logistic regression as a baseline. I built historical matchup rows from past NCAA tournament games using a neutral team A and team B ordering so the model would not always see the winner on the same side. The baseline model uses four matchup-difference features:
 
 - win percentage difference
 - average points scored difference
 - average points allowed difference
 - scoring margin difference
 
-The baseline model got about 69% accuracy on held-out historical tournament games, with a log loss of about 0.58. I think that is a pretty solid starting point because it shows the current features already contain useful predictive signal.
+That baseline logistic regression got about 69% accuracy on held-out historical tournament games, with a log loss of about 0.58. I used that model to generate first-round win probabilities for the 2026 bracket and then started advancing winners through later rounds.
 
-After training the model, I applied it to the 2026 first-round matchups and generated round 1 win probabilities and predicted winners. The model also surfaced a few upset-style picks, which matters because one of the main goals of the project is to identify possible sleepers and underdogs instead of just following the bracket seeds.
+One of the biggest things I learned was that later rounds need to carry `TeamID` forward, not just display names. Round 1 worked more easily because it was still directly tied to the cleaned bracket table, but once I started advancing winners, I had to keep the winner `TeamID` attached so I could rebuild features correctly in the next round.
 
-After that, I started working on bracket advancement logic. One thing I learned there is that later rounds need to carry `TeamID` forward, not just team names. Round 1 worked more easily because it was still directly connected to the cleaned bracket table, but once I started advancing winners, I had to keep winner `TeamID`s attached so I could rebuild matchup features correctly in later rounds.
+Using that process, I advanced all four regions through their regional finals, then built the Final Four and national championship game. The current deterministic baseline bracket has:
 
-Using that process, I advanced all four regions through their regional finals, then built the Final Four and national championship game. The current baseline model's regional champions are `Duke`, `Gonzaga`, `Florida`, and `Michigan`. In the Final Four, the model has `Gonzaga` beating `Florida` and `Michigan` beating `Duke`, and the current baseline national champion is `Michigan`.
+- East champion: `Duke`
+- West champion: `Gonzaga`
+- South champion: `Florida`
+- Midwest champion: `Michigan`
 
-At this point, the project has a full deterministic bracket path from the opening round through the championship game. The next major step is Monte Carlo simulation so the project can move beyond one single bracket path and estimate things like championship odds, Final Four odds, upset frequency, and sleeper-team runs across many simulated tournaments.
+In that deterministic bracket, the final national champion was `Michigan`.
+
+After that, I moved on to Monte Carlo simulation. Instead of always advancing the higher-probability team, Monte Carlo uses the model's probabilities to simulate the entire tournament many times. I built reusable simulation functions in the project package and ran 1000 full tournament simulations.
+
+Those simulations showed a different picture than the single deterministic bracket. Even though the deterministic bracket picked `Michigan`, the most common simulated champion was `Duke` at about 17.5%, followed by `Gonzaga`, `Michigan`, and `Arizona`. The simulations also highlighted teams like `Saint Louis` as interesting sleeper-style outcomes because they appeared more often than I would expect from seed alone.
+
+I also moved the reusable simulation logic out of the notebook and into the Python package so the app and the rest of the project could use the same code. Then I updated the Streamlit app to show a deterministic bracket view, a consensus simulation view, championship odds, upset-watch charts, and a one-click random tournament run.
+
+At this point, the project can show both a single baseline bracket path and a probability-based view of the tournament across many simulations. The next things I would improve are deeper round odds like Final Four probabilities, clearer sleeper definitions, and continued polish on the app layout.
 
 ## Short Version
 
-I used the Kaggle March Madness dataset plus my own current bracket file, engineered team-season and matchup-level features, trained a baseline logistic regression model on historical NCAA tournament games, and got about 69% accuracy on held-out data. Then I used that model to generate 2026 first-round predictions, carried winners forward through the bracket using `TeamID`, and completed a full baseline bracket run through the national championship game, where the current predicted champion is Michigan. The next step is Monte Carlo simulation so I can estimate probabilities across many possible tournament outcomes instead of just one bracket path.
-
+I used the Kaggle March Madness dataset plus my own current bracket file, engineered team-season and matchup-level features, trained a baseline logistic regression model on historical NCAA tournament games, and got about 69% accuracy on held-out data. Then I used that model to build a full deterministic bracket, where the current baseline champion is Michigan. After that, I added Monte Carlo simulation and ran 1000 full tournament simulations, which showed Duke as the most common simulated national champion. The project now includes both reusable simulation code and a Streamlit app that shows the bracket and simulation results.
