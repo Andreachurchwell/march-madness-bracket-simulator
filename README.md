@@ -78,22 +78,42 @@ Held-out baseline performance:
 
 ### Deterministic Bracket
 
-- East champion: `Duke`
-- West champion: `Gonzaga`
-- South champion: `Florida`
-- Midwest champion: `Michigan`
-- National champion: `Michigan`
+<p>
+  <img src="assets/duke.png" alt="Duke" width="28">
+  <img src="assets/gonzaga.png" alt="Gonzaga" width="28">
+  <img src="assets/florida.png" alt="Florida" width="28">
+  <img src="assets/michigan.png" alt="Michigan" width="28">
+</p>
+
+| Region | Champion |
+|---|---|
+| East | `Duke` |
+| West | `Gonzaga` |
+| South | `Florida` |
+| Midwest | `Michigan` |
+| National Champion | `Michigan` |
 
 ### Monte Carlo Title Odds
 
 From `1000` full tournament simulations:
 
-- `Duke`: about `17.5%`
-- `Gonzaga`: about `14.0%`
-- `Michigan`: about `13.7%`
-- `Arizona`: about `10.1%`
-- `Iowa St.`: about `6.8%`
-- `Saint Louis`: about `6.2%`
+<p>
+  <img src="assets/duke.png" alt="Duke" width="28">
+  <img src="assets/gonzaga.png" alt="Gonzaga" width="28">
+  <img src="assets/michigan.png" alt="Michigan" width="28">
+  <img src="assets/arizona.png" alt="Arizona" width="28">
+  <img src="assets/iowastate.png" alt="Iowa State" width="28">
+  <img src="assets/stlouis.png" alt="Saint Louis" width="28">
+</p>
+
+| Team | Championship Odds |
+|---|---|
+| `Duke` | about `17.5%` |
+| `Gonzaga` | about `14.0%` |
+| `Michigan` | about `13.7%` |
+| `Arizona` | about `10.1%` |
+| `Iowa St.` | about `6.8%` |
+| `Saint Louis` | about `6.2%` |
 
 One of the main project takeaways is that the deterministic bracket picked `Michigan`, while the most common simulated champion was `Duke`.
 
@@ -112,6 +132,12 @@ The Streamlit app currently shows:
 Branding:
 
 - **Andrea's Bracket Breakdown**
+
+---
+
+## 🎯 Main Question
+
+If I simulate the NCAA tournament over and over using matchup-based team features, which teams, upsets, and sleeper runs keep showing up?
 
 ---
 
@@ -181,6 +207,12 @@ This project was a way to combine:
 - sleeper-team hunting
 
 into something that is both analytical and fun to explore.
+
+## Personal Motivation
+
+March is honestly one of my favorite months of the year. It is my mom's birthday month, and March Madness is something we both love. She always seems to do better than me on the bracket, and I still do not know if that is because she has way more experience, because she does not fall for underdogs the way I do, or because she is just lucky.
+
+That is a big part of why I wanted to make this project. I wanted to see if I could use data, feature engineering, and simulation to make smarter bracket decisions while still keeping the fun of trying to spot upsets and sleeper teams.
 
 ---
 
