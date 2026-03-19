@@ -210,3 +210,7 @@ __marimo__/
 .uv-cache/
 data/
 .uv-cache/
+
+
+.pytest_cache/
+pytest-cache-files-*/
