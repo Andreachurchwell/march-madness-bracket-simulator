@@ -20,7 +20,7 @@
 
 ---
 
-## Overview
+## 🏀 Overview
 
 Andrea's Bracket Breakdown is a men's March Madness project built to compare two ways of reading the tournament:
 
@@ -36,7 +36,7 @@ The goal is not just to pick one bracket. It is to understand:
 
 ---
 
-## Data
+## 📂 Data
 
 Main source:
 
@@ -56,7 +56,7 @@ Project-specific bracket file:
 
 ---
 
-## Model
+## 🧠 Model
 
 The baseline model is a logistic regression trained on historical NCAA tournament matchups.
 
@@ -74,7 +74,7 @@ Held-out baseline performance:
 
 ---
 
-## Current Results
+## 📊 Current Results
 
 ### Deterministic Bracket
 
@@ -99,7 +99,7 @@ One of the main project takeaways is that the deterministic bracket picked `Mich
 
 ---
 
-## App
+## ✨ App
 
 The Streamlit app currently shows:
 
@@ -115,7 +115,7 @@ Branding:
 
 ---
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```text
 march-madness-bracket-simulator/
@@ -141,7 +141,7 @@ march-madness-bracket-simulator/
 
 ---
 
-## Setup
+## 🚀 Setup
 
 Sync the environment:
 
@@ -169,7 +169,22 @@ streamlit run app/streamlit_app.py
 
 ---
 
-## Next Steps
+## 💖 Why This Project
+
+March Madness is one of the most fun and chaotic things to try to predict because one bracket can look completely different from another just from a few close games flipping.
+
+This project was a way to combine:
+
+- sports
+- data
+- simulation
+- sleeper-team hunting
+
+into something that is both analytical and fun to explore.
+
+---
+
+## 🌟 Next Steps
 
 - add Final Four odds and regional win odds
 - define sleeper teams more explicitly from simulation results
@@ -178,6 +193,6 @@ streamlit run app/streamlit_app.py
 
 ---
 
-## Author
+## 👩‍💻 Author
 
 Andrea Churchwell
