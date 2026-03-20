@@ -9,7 +9,8 @@ from sklearn.linear_model import LogisticRegression
 
 from march_madness_bracket_simulator.analysis import (
     simulate_consensus_bracket,
-    simulate_tournament_champions,
+    simulate_tournament_summary,
+    summarize_round_odds,
     summarize_champion_odds,
 )
 from march_madness_bracket_simulator.data_loader import load_core_march_madness_data
@@ -24,7 +25,8 @@ st.set_page_config(
 )
 
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
-LOGO_PATH = ASSETS_DIR / "abb-logo.svg"
+LOGO_PATH = ASSETS_DIR / "logo.webp"
+HERO_PATH = ASSETS_DIR / "marchM.png"
 TEAM_LOGO_MAP = {
     "Akron": ASSETS_DIR / "akron.png",
     "Alabama": ASSETS_DIR / "bama.png",
@@ -124,6 +126,21 @@ def apply_styles() -> None:
                 letter-spacing: -0.03em;
                 color: #f8fafc;
                 margin-bottom: 0.2rem;
+            }
+            .hero-inner {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                justify-content: space-between;
+            }
+            .hero-logo {
+                width: 132px;
+                height: 132px;
+                object-fit: contain;
+                flex: 0 0 auto;
+            }
+            .hero-copy {
+                flex: 1 1 auto;
             }
             .hero-subtitle {
                 color: #cbd5e1;
@@ -739,6 +756,61 @@ def render_seed_odds_chart(champion_odds: pd.DataFrame) -> None:
     st.altair_chart(chart, width="stretch", theme=None)
 
 
+def render_region_odds_chart(regional_odds: dict[str, pd.DataFrame]) -> None:
+    chart_data = pd.concat(
+        [df.assign(region_name=region) for region, df in regional_odds.items()],
+        ignore_index=True,
+    )
+    chart = (
+        alt.Chart(chart_data)
+        .mark_bar(cornerRadiusEnd=5)
+        .encode(
+            x=alt.X("regional_win_odds_pct:Q", title="Regional Win Odds (%)"),
+            y=alt.Y("team:N", sort="-x", title=None),
+            color=alt.Color("region_name:N", legend=alt.Legend(title="Region")),
+            tooltip=["team", "region_name", "regional_win_odds_pct", "seed"],
+            row=alt.Row("region_name:N", title=None),
+        )
+        .properties(height=150, background="#121926")
+        .resolve_scale(y="independent")
+        .configure_view(strokeWidth=0)
+        .configure_axis(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+            gridColor="rgba(148,163,184,0.15)",
+            domainColor="rgba(148,163,184,0.25)",
+            tickColor="rgba(148,163,184,0.25)",
+        )
+        .configure_legend(labelColor="#cbd5e1", titleColor="#f8fafc")
+        .configure_header(labelColor="#f8fafc", titleColor="#93c5fd")
+    )
+    st.altair_chart(chart, width="stretch", theme=None)
+
+
+def render_final_four_odds_chart(final_four_odds: pd.DataFrame) -> None:
+    chart = (
+        alt.Chart(final_four_odds)
+        .mark_bar(cornerRadiusEnd=5)
+        .encode(
+            x=alt.X("final_four_odds_pct:Q", title="Final Four Odds (%)"),
+            y=alt.Y("team:N", sort="-x", title=None),
+            color=alt.Color("region:N", legend=alt.Legend(title="Region")),
+            tooltip=["team", "region", "final_four_odds_pct", "seed"],
+        )
+        .properties(height=320, background="#121926")
+        .configure_view(strokeWidth=0)
+        .configure_axis(
+            labelColor="#cbd5e1",
+            titleColor="#f8fafc",
+            gridColor="rgba(148,163,184,0.15)",
+            domainColor="rgba(148,163,184,0.25)",
+            tickColor="rgba(148,163,184,0.25)",
+        )
+        .configure_legend(labelColor="#cbd5e1", titleColor="#f8fafc")
+    )
+    st.altair_chart(chart, width="stretch", theme=None)
+
+
 def render_upset_watch_chart(round1_predictions: pd.DataFrame) -> None:
     chart_data = (
         round1_predictions.sort_values("favorite_win_prob")
@@ -1132,6 +1204,15 @@ def annotate_champion_odds(champion_odds: pd.DataFrame, bracket_2026: pd.DataFra
     return champion_odds.merge(seed_lookup, on="team", how="left")
 
 
+def annotate_team_odds(odds_df: pd.DataFrame, bracket_2026: pd.DataFrame) -> pd.DataFrame:
+    seed_lookup = (
+        bracket_2026[~bracket_2026["is_play_in"]][["team", "seed", "region"]]
+        .drop_duplicates()
+        .rename(columns={"team": "team"})
+    )
+    return odds_df.merge(seed_lookup, on="team", how="left")
+
+
 @st.cache_data
 def load_app_data():
     data = load_core_march_madness_data()
@@ -1168,7 +1249,7 @@ def load_app_data():
         n_simulations=MONTE_CARLO_SIMULATIONS,
         random_seed=42,
     )
-    champion_counts = simulate_tournament_champions(
+    simulation_summary = simulate_tournament_summary(
         round1_id_tables["East"],
         round1_id_tables["West"],
         round1_id_tables["South"],
@@ -1181,9 +1262,30 @@ def load_app_data():
         random_seed=42,
     )
     champion_odds = annotate_champion_odds(
-        summarize_champion_odds(champion_counts, top_n=10),
+        summarize_champion_odds(simulation_summary["champion_counts"], top_n=10),
         bracket_2026,
     )
+    final_four_odds = annotate_team_odds(
+        summarize_round_odds(
+            simulation_summary["final_four_counts"],
+            simulation_summary["n_simulations"],
+            "final_four_odds_pct",
+            top_n=10,
+        ),
+        bracket_2026,
+    )
+    regional_odds = {
+        region: annotate_team_odds(
+            summarize_round_odds(
+                counts,
+                simulation_summary["n_simulations"],
+                "regional_win_odds_pct",
+                top_n=5,
+            ),
+            bracket_2026,
+        )
+        for region, counts in simulation_summary["regional_counts"].items()
+    }
 
     return (
         data,
@@ -1194,6 +1296,8 @@ def load_app_data():
         deterministic_bracket,
         consensus_bracket,
         champion_odds,
+        final_four_odds,
+        regional_odds,
         round1_id_tables,
         features_latest,
         model,
@@ -1211,6 +1315,8 @@ def main() -> None:
         deterministic_bracket,
         consensus_bracket,
         champion_odds,
+        final_four_odds,
+        regional_odds,
         round1_id_tables,
         features_latest,
         model,
@@ -1225,17 +1331,28 @@ def main() -> None:
         st.markdown("- Sleeper and takeaway cards")
         st.markdown("- One random tournament run")
 
+    hero_logo_html = ""
+    if HERO_PATH.exists():
+        hero_logo_html = (
+            "<img src='data:image/png;base64,"
+            + base64.b64encode(HERO_PATH.read_bytes()).decode("ascii")
+            + "' class='hero-logo' alt=\"Andrea's Bracket Breakdown logo\" />"
+        )
+
     st.markdown(
         dedent(
             f"""
             <div class="hero-card">
-                <div>
-                    <div class="section-label">Bracket Dashboard</div>
-                    <div class="hero-title">Andrea's Bracket Breakdown</div>
-                    <p class="hero-subtitle">
-                        A cleaner view of the project: one deterministic bracket, one Monte Carlo picture,
-                        and the teams the model thinks matter most.
-                    </p>
+                <div class="hero-inner">
+                    <div class="hero-copy">
+                        <div class="section-label">Bracket Dashboard</div>
+                        <div class="hero-title">Andrea's Bracket Breakdown</div>
+                        <p class="hero-subtitle">
+                            A cleaner view of the project: one deterministic bracket, one Monte Carlo picture,
+                            and the teams the model thinks matter most.
+                        </p>
+                    </div>
+                    {hero_logo_html}
                 </div>
             </div>
             """
@@ -1361,6 +1478,26 @@ def main() -> None:
             render_featured_team_chips(sim_teams)
         st.markdown("### One Random Run")
         st.write(f"Use the button to sample one random tournament path. Current simulated champion: {sim_champion}.")
+
+    st.write("")
+
+    odds_extra_left, odds_extra_right = st.columns(2)
+
+    with odds_extra_left:
+        panel(
+            "Regional Win Odds",
+            "Simulation Chart",
+            "This view breaks the simulations back down by region so you can see who wins East, West, South, and Midwest most often.",
+        )
+        render_region_odds_chart(regional_odds)
+
+    with odds_extra_right:
+        panel(
+            "Final Four Odds",
+            "Simulation Chart",
+            "This chart shows which teams make the Final Four most often across the full Monte Carlo run, not just who wins the title most often.",
+        )
+        render_final_four_odds_chart(final_four_odds)
 
     st.write("")
 

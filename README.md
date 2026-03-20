@@ -126,6 +126,8 @@ The Streamlit app currently shows:
 - a deterministic bracket view
 - a consensus simulation Final Four view
 - championship odds
+- Final Four odds
+- regional win odds
 - round-1 upset watch
 - one random tournament run
 

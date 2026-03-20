@@ -146,3 +146,72 @@ def simulate_consensus_bracket(
         "champion": championship.iloc[0]["consensus_winner"],
         "champion_share": championship.iloc[0]["consensus_share"],
     }
+
+
+def simulate_tournament_summary(
+    east_round1_ids: pd.DataFrame,
+    west_round1_ids: pd.DataFrame,
+    south_round1_ids: pd.DataFrame,
+    midwest_round1_ids: pd.DataFrame,
+    features_2026: pd.DataFrame,
+    feature_cols: Sequence[str],
+    model,
+    second_round_pairs: Sequence[tuple[int, int]],
+    n_simulations: int = 1000,
+    random_seed: int | None = None,
+) -> dict[str, object]:
+    """Run repeated simulations and collect champion, regional, and Final Four counts."""
+    rng = np.random.default_rng(random_seed)
+    champion_counts: dict[str, int] = {}
+    final_four_counts: dict[str, int] = {}
+    regional_counts: dict[str, dict[str, int]] = {
+        region: {} for region in ["East", "West", "South", "Midwest"]
+    }
+
+    for _ in range(n_simulations):
+        simulation = simulate_full_tournament_details_once(
+            east_round1_ids,
+            west_round1_ids,
+            south_round1_ids,
+            midwest_round1_ids,
+            features_2026,
+            feature_cols,
+            model,
+            second_round_pairs,
+            rng=rng,
+        )
+
+        champion = simulation["champion"]
+        champion_counts[champion] = champion_counts.get(champion, 0) + 1
+
+        for region_name, region_data in simulation["regions"].items():
+            region_champ = region_data["champion"]
+            regional_counts[region_name][region_champ] = regional_counts[region_name].get(region_champ, 0) + 1
+            final_four_counts[region_champ] = final_four_counts.get(region_champ, 0) + 1
+
+    return {
+        "n_simulations": n_simulations,
+        "champion_counts": pd.Series(champion_counts).sort_values(ascending=False),
+        "final_four_counts": pd.Series(final_four_counts).sort_values(ascending=False),
+        "regional_counts": {
+            region: pd.Series(counts).sort_values(ascending=False)
+            for region, counts in regional_counts.items()
+        },
+    }
+
+
+def summarize_round_odds(
+    counts: pd.Series,
+    simulations: int,
+    odds_col_name: str,
+    top_n: int | None = None,
+) -> pd.DataFrame:
+    """Convert repeated simulation counts into a sorted odds table."""
+    odds = (
+        counts.rename_axis("team")
+        .reset_index(name="appearances")
+        .assign(**{odds_col_name: lambda df: (df["appearances"] / simulations * 100).round(1)})
+    )
+    if top_n is not None:
+        odds = odds.head(top_n)
+    return odds.reset_index(drop=True)

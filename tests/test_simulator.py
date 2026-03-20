@@ -3,7 +3,9 @@ import pandas as pd
 
 from march_madness_bracket_simulator.analysis import (
     simulate_consensus_bracket,
+    simulate_tournament_summary,
     simulate_tournament_champions,
+    summarize_round_odds,
     summarize_champion_odds,
 )
 from march_madness_bracket_simulator.simulator import (
@@ -164,3 +166,34 @@ def test_simulate_consensus_bracket_returns_expected_shape():
     assert consensus["regions"]["East"]["round3"].shape[0] == 2
     assert consensus["regions"]["East"]["final"].shape[0] == 1
     assert 0 <= consensus["champion_share"] <= 1
+
+
+def test_simulate_tournament_summary_and_round_odds():
+    pairs = [(0, 1), (2, 3), (4, 5), (6, 7)]
+    east_ids = [(f"EastTeam{i}", 1000 + i) for i in range(16)]
+    west_ids = [(f"WestTeam{i}", 2000 + i) for i in range(16)]
+    south_ids = [(f"SouthTeam{i}", 3000 + i) for i in range(16)]
+    midwest_ids = [(f"MidwestTeam{i}", 4000 + i) for i in range(16)]
+    all_teams = east_ids + west_ids + south_ids + midwest_ids
+    features = make_features([(team_id, name) for name, team_id in all_teams])
+
+    summary = simulate_tournament_summary(
+        make_region_round1("East", east_ids),
+        make_region_round1("West", west_ids),
+        make_region_round1("South", south_ids),
+        make_region_round1("Midwest", midwest_ids),
+        features,
+        ["win_pct_diff", "points_for_diff", "points_against_diff", "scoring_margin_diff"],
+        DummyModel(),
+        pairs,
+        n_simulations=30,
+        random_seed=11,
+    )
+
+    ff_odds = summarize_round_odds(summary["final_four_counts"], summary["n_simulations"], "final_four_odds_pct", top_n=5)
+
+    assert summary["n_simulations"] == 30
+    assert summary["champion_counts"].sum() == 30
+    assert summary["final_four_counts"].sum() == 120
+    assert set(summary["regional_counts"].keys()) == {"East", "West", "South", "Midwest"}
+    assert "final_four_odds_pct" in ff_odds.columns

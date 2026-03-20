@@ -34,9 +34,9 @@ After that, I moved on to Monte Carlo simulation. Instead of always advancing th
 
 Those simulations showed a different picture than the single deterministic bracket. Even though the deterministic bracket picked `Michigan`, the most common simulated champion was `Duke` at about 17.5%, followed by `Gonzaga`, `Michigan`, and `Arizona`. The simulations also highlighted teams like `Saint Louis` as interesting sleeper-style outcomes because they appeared more often than I would expect from seed alone.
 
-I also moved the reusable simulation logic out of the notebook and into the Python package so the app and the rest of the project could use the same code. Then I updated the Streamlit app to show a deterministic bracket view, a consensus simulation view, championship odds, upset-watch charts, and a one-click random tournament run.
+I also moved the reusable simulation logic out of the notebook and into the Python package so the app and the rest of the project could use the same code. Then I updated the Streamlit app to show a deterministic bracket view, a consensus simulation view, championship odds, Final Four odds, regional win odds, upset-watch charts, and a one-click random tournament run.
 
-At this point, the project can show both a single baseline bracket path and a probability-based view of the tournament across many simulations. The next things I would improve are deeper round odds like Final Four probabilities, clearer sleeper definitions, and continued polish on the app layout.
+At this point, the project can show both a single baseline bracket path and a probability-based view of the tournament across many simulations. The next things I would improve are clearer sleeper definitions, deeper round summaries beyond the title race, and continued polish on the app layout.
 
 ## Short Version
 

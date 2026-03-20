@@ -205,6 +205,8 @@
   - a deterministic bracket view
   - a consensus simulation Final Four view
   - championship odds from 1000 simulations
+  - Final Four odds from 1000 simulations
+  - regional win odds from 1000 simulations
   - a round-1 upset watch chart
   - a one-click random tournament run
 - Added team logo assets and wired them into the app
@@ -221,9 +223,9 @@
 - The package now contains reusable simulation and analysis functions
 - The app now communicates the main project outputs instead of only showing exploratory tables
 - The project can now show both a baseline bracket and a simulation-based interpretation of the tournament
+- The app now includes championship odds, Final Four odds, and regional win odds
 
 ### Next Steps
-- Summarize Final Four odds and regional win odds, not just championship odds
 - Define sleeper teams more explicitly using simulation outputs
 - Keep refining the app layout so it feels more intentional and less like a notebook port
 - Record a walkthrough video using the updated script and app
