@@ -169,12 +169,12 @@
 - Deterministic national champion: `Michigan`
 
 ### 1000-Simulation Championship Odds Highlights
-- `Duke`: about `17.5%`
-- `Gonzaga`: about `14.0%`
-- `Michigan`: about `13.7%`
-- `Arizona`: about `10.1%`
-- `Iowa St.`: about `6.8%`
-- `Saint Louis`: about `6.2%`
+- `Duke`: about `18.5%`
+- `Gonzaga`: about `13.9%`
+- `Michigan`: about `13.9%`
+- `Arizona`: about `8.5%`
+- `Iowa St.`: about `6.7%`
+- `Saint Louis`: about `6.0%`
 
 ### What I learned
 - Carrying `TeamID` forward through every round is what made later-round matchup rebuilding and simulation possible

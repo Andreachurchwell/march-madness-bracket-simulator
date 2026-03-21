@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -215,3 +217,100 @@ def summarize_round_odds(
     if top_n is not None:
         odds = odds.head(top_n)
     return odds.reset_index(drop=True)
+
+
+def _frame_to_payload(frame: pd.DataFrame) -> dict[str, object]:
+    return {
+        "columns": frame.columns.tolist(),
+        "rows": frame.to_dict(orient="records"),
+    }
+
+
+def _frame_from_payload(payload: dict[str, object]) -> pd.DataFrame:
+    return pd.DataFrame(payload["rows"], columns=payload["columns"])
+
+
+def save_simulation_outputs(
+    output_dir: str | Path,
+    *,
+    champion_odds: pd.DataFrame,
+    final_four_odds: pd.DataFrame,
+    regional_odds: dict[str, pd.DataFrame],
+    consensus_bracket: dict[str, object],
+    n_simulations: int,
+    random_seed: int | None,
+) -> None:
+    """Persist app-facing simulation outputs for fast reloads."""
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    champion_odds.to_csv(output_path / "champion_odds.csv", index=False)
+    final_four_odds.to_csv(output_path / "final_four_odds.csv", index=False)
+
+    for region, df in regional_odds.items():
+        region_slug = region.lower().replace(" ", "_")
+        df.to_csv(output_path / f"regional_odds_{region_slug}.csv", index=False)
+
+    consensus_payload = {
+        "n_simulations": n_simulations,
+        "random_seed": random_seed,
+        "champion": consensus_bracket["champion"],
+        "champion_share": consensus_bracket["champion_share"],
+        "final_four": _frame_to_payload(consensus_bracket["final_four"]),
+        "championship": _frame_to_payload(consensus_bracket["championship"]),
+        "regions": {
+            region: {
+                round_name: _frame_to_payload(frame)
+                for round_name, frame in rounds.items()
+            }
+            for region, rounds in consensus_bracket["regions"].items()
+        },
+    }
+
+    (output_path / "consensus_bracket.json").write_text(
+        json.dumps(consensus_payload, indent=2),
+        encoding="utf-8",
+    )
+
+
+def load_simulation_outputs(output_dir: str | Path) -> dict[str, object] | None:
+    """Load persisted simulation outputs if they exist."""
+    output_path = Path(output_dir)
+    champion_path = output_path / "champion_odds.csv"
+    final_four_path = output_path / "final_four_odds.csv"
+    consensus_path = output_path / "consensus_bracket.json"
+    region_paths = {
+        region: output_path / f"regional_odds_{region.lower().replace(' ', '_')}.csv"
+        for region in ["East", "West", "South", "Midwest"]
+    }
+
+    required_paths = [champion_path, final_four_path, consensus_path, *region_paths.values()]
+    if not all(path.exists() for path in required_paths):
+        return None
+
+    consensus_payload = json.loads(consensus_path.read_text(encoding="utf-8"))
+    consensus_bracket = {
+        "champion": consensus_payload["champion"],
+        "champion_share": consensus_payload["champion_share"],
+        "final_four": _frame_from_payload(consensus_payload["final_four"]),
+        "championship": _frame_from_payload(consensus_payload["championship"]),
+        "regions": {
+            region: {
+                round_name: _frame_from_payload(frame_payload)
+                for round_name, frame_payload in rounds.items()
+            }
+            for region, rounds in consensus_payload["regions"].items()
+        },
+    }
+
+    return {
+        "n_simulations": consensus_payload.get("n_simulations"),
+        "random_seed": consensus_payload.get("random_seed"),
+        "champion_odds": pd.read_csv(champion_path),
+        "final_four_odds": pd.read_csv(final_four_path),
+        "regional_odds": {
+            region: pd.read_csv(path)
+            for region, path in region_paths.items()
+        },
+        "consensus_bracket": consensus_bracket,
+    }

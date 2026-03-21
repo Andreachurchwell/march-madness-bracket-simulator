@@ -8,6 +8,7 @@ import streamlit as st
 from sklearn.linear_model import LogisticRegression
 
 from march_madness_bracket_simulator.analysis import (
+    load_simulation_outputs,
     simulate_consensus_bracket,
     simulate_tournament_summary,
     summarize_round_odds,
@@ -27,6 +28,7 @@ st.set_page_config(
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.webp"
 HERO_PATH = ASSETS_DIR / "marchM.png"
+SIMULATION_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "processed" / "simulation_cache"
 TEAM_LOGO_MAP = {
     "Akron": ASSETS_DIR / "akron.png",
     "Alabama": ASSETS_DIR / "bama.png",
@@ -1237,55 +1239,62 @@ def load_app_data():
         features_latest,
         model,
     )
-    consensus_bracket = simulate_consensus_bracket(
-        round1_id_tables["East"],
-        round1_id_tables["West"],
-        round1_id_tables["South"],
-        round1_id_tables["Midwest"],
-        features_latest,
-        FEATURE_COLS,
-        model,
-        SECOND_ROUND_PAIRS,
-        n_simulations=MONTE_CARLO_SIMULATIONS,
-        random_seed=42,
-    )
-    simulation_summary = simulate_tournament_summary(
-        round1_id_tables["East"],
-        round1_id_tables["West"],
-        round1_id_tables["South"],
-        round1_id_tables["Midwest"],
-        features_latest,
-        FEATURE_COLS,
-        model,
-        SECOND_ROUND_PAIRS,
-        n_simulations=MONTE_CARLO_SIMULATIONS,
-        random_seed=42,
-    )
-    champion_odds = annotate_champion_odds(
-        summarize_champion_odds(simulation_summary["champion_counts"], top_n=10),
-        bracket_2026,
-    )
-    final_four_odds = annotate_team_odds(
-        summarize_round_odds(
-            simulation_summary["final_four_counts"],
-            simulation_summary["n_simulations"],
-            "final_four_odds_pct",
-            top_n=10,
-        ),
-        bracket_2026,
-    )
-    regional_odds = {
-        region: annotate_team_odds(
+    cached_simulation = load_simulation_outputs(SIMULATION_CACHE_DIR)
+    if cached_simulation is not None:
+        consensus_bracket = cached_simulation["consensus_bracket"]
+        champion_odds = cached_simulation["champion_odds"]
+        final_four_odds = cached_simulation["final_four_odds"]
+        regional_odds = cached_simulation["regional_odds"]
+    else:
+        consensus_bracket = simulate_consensus_bracket(
+            round1_id_tables["East"],
+            round1_id_tables["West"],
+            round1_id_tables["South"],
+            round1_id_tables["Midwest"],
+            features_latest,
+            FEATURE_COLS,
+            model,
+            SECOND_ROUND_PAIRS,
+            n_simulations=MONTE_CARLO_SIMULATIONS,
+            random_seed=42,
+        )
+        simulation_summary = simulate_tournament_summary(
+            round1_id_tables["East"],
+            round1_id_tables["West"],
+            round1_id_tables["South"],
+            round1_id_tables["Midwest"],
+            features_latest,
+            FEATURE_COLS,
+            model,
+            SECOND_ROUND_PAIRS,
+            n_simulations=MONTE_CARLO_SIMULATIONS,
+            random_seed=42,
+        )
+        champion_odds = annotate_champion_odds(
+            summarize_champion_odds(simulation_summary["champion_counts"], top_n=10),
+            bracket_2026,
+        )
+        final_four_odds = annotate_team_odds(
             summarize_round_odds(
-                counts,
+                simulation_summary["final_four_counts"],
                 simulation_summary["n_simulations"],
-                "regional_win_odds_pct",
-                top_n=5,
+                "final_four_odds_pct",
+                top_n=10,
             ),
             bracket_2026,
         )
-        for region, counts in simulation_summary["regional_counts"].items()
-    }
+        regional_odds = {
+            region: annotate_team_odds(
+                summarize_round_odds(
+                    counts,
+                    simulation_summary["n_simulations"],
+                    "regional_win_odds_pct",
+                    top_n=5,
+                ),
+                bracket_2026,
+            )
+            for region, counts in simulation_summary["regional_counts"].items()
+        }
 
     return (
         data,

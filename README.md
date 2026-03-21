@@ -108,12 +108,12 @@ From `1000` full tournament simulations:
 
 | Team | Championship Odds |
 |---|---|
-| `Duke` | about `17.5%` |
-| `Gonzaga` | about `14.0%` |
-| `Michigan` | about `13.7%` |
-| `Arizona` | about `10.1%` |
-| `Iowa St.` | about `6.8%` |
-| `Saint Louis` | about `6.2%` |
+| `Duke` | about `18.5%` |
+| `Gonzaga` | about `13.9%` |
+| `Michigan` | about `13.9%` |
+| `Arizona` | about `8.5%` |
+| `Iowa St.` | about `6.7%` |
+| `Saint Louis` | about `6.0%` |
 
 One of the main project takeaways is that the deterministic bracket picked `Michigan`, while the most common simulated champion was `Duke`.
 

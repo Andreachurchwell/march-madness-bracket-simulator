@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
+import shutil
 
 from march_madness_bracket_simulator.analysis import (
+    load_simulation_outputs,
+    save_simulation_outputs,
     simulate_consensus_bracket,
     simulate_tournament_summary,
     simulate_tournament_champions,
@@ -197,3 +201,56 @@ def test_simulate_tournament_summary_and_round_odds():
     assert summary["final_four_counts"].sum() == 120
     assert set(summary["regional_counts"].keys()) == {"East", "West", "South", "Midwest"}
     assert "final_four_odds_pct" in ff_odds.columns
+
+
+def test_save_and_load_simulation_outputs_roundtrip():
+    champion_odds = pd.DataFrame(
+        [{"team": "Duke", "titles_won": 10, "championship_odds_pct": 18.5, "seed": 1, "region": "East"}]
+    )
+    final_four_odds = pd.DataFrame(
+        [{"team": "Duke", "appearances": 30, "final_four_odds_pct": 30.0, "seed": 1, "region": "East"}]
+    )
+    regional_odds = {
+        region: pd.DataFrame(
+            [{"team": f"{region} Team", "appearances": 25, "regional_win_odds_pct": 25.0, "seed": 1, "region": region}]
+        )
+        for region in ["East", "West", "South", "Midwest"]
+    }
+    consensus_bracket = {
+        "champion": "Duke",
+        "champion_share": 0.185,
+        "final_four": pd.DataFrame([{"team_a": "Florida", "team_b": "Duke", "consensus_winner": "Duke"}]),
+        "championship": pd.DataFrame([{"team_a": "Duke", "team_b": "Gonzaga", "consensus_winner": "Duke"}]),
+        "regions": {
+            region: {
+                round_name: pd.DataFrame([{"consensus_winner": f"{region} Team"}])
+                for round_name in ["round1", "round2", "round3", "final"]
+            }
+            for region in ["East", "West", "South", "Midwest"]
+        },
+    }
+
+    tmp_dir = Path.cwd() / "data" / "processed" / "test_simulation_outputs"
+    if tmp_dir.exists():
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        save_simulation_outputs(
+            tmp_dir,
+            champion_odds=champion_odds,
+            final_four_odds=final_four_odds,
+            regional_odds=regional_odds,
+            consensus_bracket=consensus_bracket,
+            n_simulations=1000,
+            random_seed=42,
+        )
+        loaded = load_simulation_outputs(tmp_dir)
+
+        assert loaded is not None
+        assert loaded["champion_odds"].iloc[0]["team"] == "Duke"
+        assert loaded["final_four_odds"].iloc[0]["final_four_odds_pct"] == 30.0
+        assert loaded["regional_odds"]["East"].iloc[0]["team"] == "East Team"
+        assert loaded["consensus_bracket"]["champion"] == "Duke"
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
