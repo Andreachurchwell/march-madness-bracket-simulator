@@ -140,9 +140,6 @@ The Streamlit app currently shows:
 - round-1 upset watch
 - one random tournament run
 
-Branding:
-
-- **Andrea's Bracket Breakdown**
 
 ---
 
