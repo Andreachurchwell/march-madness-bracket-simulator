@@ -218,12 +218,31 @@ That is a big part of why I wanted to make this project. I wanted to see if I co
 
 ---
 
+## ⚠️ Limitations
+
+This project is still a baseline model, so there are several important things it does not capture yet:
+
+- it uses a relatively small set of matchup-difference features
+- it does not include injuries, roster changes, coaching context, or betting lines
+- it does not use more advanced possession-based or efficiency-based team metrics
+- Monte Carlo still depends on the quality of the baseline probabilities, so simulation does not magically fix model bias
+- the tournament is highly volatile, so even strong probabilities do not guarantee a correct bracket path
+
+---
+
 ## 🌟 Next Steps
 
-- add Final Four odds and regional win odds
-- define sleeper teams more explicitly from simulation results
-- keep refining the app layout and bracket presentation
+- compare the model's bracket predictions against the real tournament results once March Madness is finished
+- see which teams or regions the model handled well and where it missed
+- define sleeper teams more explicitly from simulation outputs
 - record a project walkthrough video
+
+---
+
+## 🤖 AI Assistance
+
+I used OpenAI tools to help with debugging, refactoring, and explaining parts of the project while I built the bracket simulator, simulation pipeline, and Streamlit app. The project design, modeling choices, implementation decisions, and final review were still my responsibility.
+
 
 ---
 
