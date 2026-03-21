@@ -36,6 +36,15 @@ The goal is not just to pick one bracket. It is to understand:
 
 ---
 
+## 🎥 Video Walkthrough
+
+Watch the project walkthrough here:
+
+[Andrea's Bracket Breakdown Loom Video](https://www.loom.com/share/15a03cdbefba465387a5fed8c81382e8)
+
+
+---
+
 ## 📂 Data
 
 Main source:
