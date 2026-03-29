@@ -214,3 +214,5 @@ data/
 
 .pytest_cache/
 pytest-cache-files-*/
+loom.txt
+notes2.md
