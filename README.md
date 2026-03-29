@@ -177,22 +177,46 @@ march-madness-bracket-simulator/
 
 ## 🚀 Setup
 
-Sync the environment:
+This project uses `uv` and Python `3.11+`.
+
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-Activate it:
+### Windows
+
+Activate the virtual environment:
+
+```powershell
+.venv\Scripts\activate
+```
+
+Run tests:
+
+```powershell
+python -m pytest tests/test_simulator.py
+```
+
+Run the app:
+
+```powershell
+streamlit run app/streamlit_app.py
+```
+
+### macOS / Linux
+
+Activate the virtual environment:
 
 ```bash
-source .venv/Scripts/activate
+source .venv/bin/activate
 ```
 
 Run tests:
 
 ```bash
-./.venv/Scripts/python.exe -m pytest tests/test_simulator.py
+python -m pytest tests/test_simulator.py
 ```
 
 Run the app:
@@ -201,10 +225,13 @@ Run the app:
 streamlit run app/streamlit_app.py
 ```
 
-Deploy on Streamlit Community Cloud:
+## Streamlit Deployment
+
+Deploy on Streamlit Community Cloud with:
 
 ```text
-Repository: <your GitHub repo>
+Repository: Andreachurchwell/march-madness-bracket-simulator
+Branch: main
 Main file path: app/streamlit_app.py
 ```
 
@@ -212,7 +239,7 @@ Notes for deployment:
 
 - keep the required `data/raw` CSV files in the repo
 - keep the cached files in `data/processed/simulation_cache` in the repo for faster app startup
-- Streamlit Cloud will install dependencies from `requirements.txt`
+- Streamlit Community Cloud will install dependencies from `requirements.txt`
 
 ---
 
