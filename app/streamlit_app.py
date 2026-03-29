@@ -420,6 +420,60 @@ def apply_styles() -> None:
                 border-radius: 14px;
                 overflow: hidden;
             }
+            @media (max-width: 900px) {
+                .hero-inner {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                .hero-logo {
+                    width: 96px;
+                    height: 96px;
+                }
+                .bracket-board {
+                    grid-template-columns: 1fr;
+                }
+                .ff-top,
+                .ff-bottom {
+                    grid-template-columns: 1fr;
+                }
+                .odds-row {
+                    grid-template-columns: 1fr;
+                    gap: 0.45rem;
+                }
+                .odds-pct {
+                    text-align: left;
+                }
+            }
+            @media (max-width: 640px) {
+                .hero-card, .panel-card, .bracket-column, .ff-stage {
+                    padding: 0.9rem 1rem;
+                    border-radius: 16px;
+                }
+                .hero-title {
+                    font-size: 1.7rem;
+                    line-height: 1.15;
+                }
+                .hero-subtitle {
+                    font-size: 0.95rem;
+                }
+                .metric-value {
+                    font-size: 1.45rem;
+                }
+                .matchup-card,
+                .ff-matchup,
+                .team-chip {
+                    padding: 0.65rem 0.75rem;
+                }
+                .bracket-board,
+                .ff-wrap,
+                .ff-col,
+                .team-chip-wrap {
+                    gap: 0.75rem;
+                }
+                .odds-team {
+                    font-size: 0.95rem;
+                }
+            }
         </style>
         """,
         unsafe_allow_html=True,
