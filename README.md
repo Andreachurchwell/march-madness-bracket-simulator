@@ -59,7 +59,7 @@ Main source:
 
 - Kaggle `march-machine-learning-mania-2026`
 
-This project uses men's NCAA tournament data from the Kaggle March Machine Learning Mania 2026 competition dataset, along with a project-specific bracket file created for the 2026 tournament.
+This project uses men's NCAA tournament data from the Kaggle March Machine Learning Mania 2026 competition dataset. The raw historical source files come from Kaggle, while `data/raw/bracket_2026.csv` and the cached simulation outputs in `data/processed/simulation_cache/` were generated for this project.
 
 Men's files used:
 
