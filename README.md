@@ -42,6 +42,14 @@ Watch the project walkthrough here:
 
 [Andrea's Bracket Breakdown Loom Video](https://www.loom.com/share/15a03cdbefba465387a5fed8c81382e8)
 
+---
+
+## Live App
+
+Try the deployed Streamlit app here:
+
+[Andrea's Bracket Breakdown](https://march-madness-bracket-simulator-aagsrgemhfrs8ibkjjqcme.streamlit.app/)
+
 
 ---
 
