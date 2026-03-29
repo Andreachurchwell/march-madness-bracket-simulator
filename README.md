@@ -201,6 +201,19 @@ Run the app:
 streamlit run app/streamlit_app.py
 ```
 
+Deploy on Streamlit Community Cloud:
+
+```text
+Repository: <your GitHub repo>
+Main file path: app/streamlit_app.py
+```
+
+Notes for deployment:
+
+- keep the required `data/raw` CSV files in the repo
+- keep the cached files in `data/processed/simulation_cache` in the repo for faster app startup
+- Streamlit Cloud will install dependencies from `requirements.txt`
+
 ---
 
 ## 💖 Why This Project
