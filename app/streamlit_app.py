@@ -910,6 +910,52 @@ def render_upset_watch_chart(round1_predictions: pd.DataFrame) -> None:
     st.altair_chart(chart, width="stretch", theme=None)
 
 
+def render_round_comparison_chart(
+    baseline_round_summary: pd.DataFrame,
+    consensus_round_summary: pd.DataFrame,
+) -> None:
+    baseline_chart_df = baseline_round_summary[["round", "correct_picks"]].copy()
+    baseline_chart_df["approach"] = "Baseline"
+
+    consensus_chart_df = consensus_round_summary[["round", "correct_picks"]].copy()
+    consensus_chart_df["approach"] = "Monte Carlo Consensus"
+
+    chart_df = pd.concat([baseline_chart_df, consensus_chart_df], ignore_index=True)
+    round_order = ["First Round", "Second Round", "Sweet 16", "Elite 8", "Final Four", "Championship"]
+
+    chart = (
+        alt.Chart(chart_df)
+        .mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
+        .encode(
+            x=alt.X("round:N", sort=round_order, title="Round", axis=alt.Axis(labelAngle=0)),
+            xOffset=alt.XOffset("approach:N"),
+            y=alt.Y("correct_picks:Q", title="Correct Picks"),
+            color=alt.Color(
+                "approach:N",
+                scale=alt.Scale(
+                    domain=["Baseline", "Monte Carlo Consensus"],
+                    range=["#60a5fa", "#f59e0b"],
+                ),
+                legend=alt.Legend(title=None, orient="top"),
+            ),
+            tooltip=[
+                alt.Tooltip("round:N", title="Round"),
+                alt.Tooltip("approach:N", title="Approach"),
+                alt.Tooltip("correct_picks:Q", title="Correct picks"),
+            ],
+        )
+        .properties(height=320)
+        .configure_view(strokeOpacity=0)
+        .configure_axis(
+            labelColor="#cbd5e1",
+            titleColor="#e2e8f0",
+            gridColor="rgba(148, 163, 184, 0.18)",
+        )
+        .configure_legend(labelColor="#e2e8f0")
+    )
+    st.altair_chart(chart, width="stretch", theme=None)
+
+
 def prepare_bracket_features(
     bracket_2026: pd.DataFrame,
     teams: pd.DataFrame,
@@ -1458,6 +1504,12 @@ def render_evaluation_section(
         f"The consensus Monte Carlo bracket tied the baseline on total correct picks, but it missed the champion. "
         f"At the same time, the full simulation still treated {consensus_eval['actual_champion']} as a real contender, "
         f"ranking them #{monte_carlo_summary['actual_champion_rank']} in title odds."
+    )
+
+    st.markdown("#### Round-By-Round Comparison")
+    render_round_comparison_chart(
+        baseline_eval["round_summary"],
+        consensus_eval["round_summary"],
     )
 
     missed_left, missed_right = st.columns(2)
