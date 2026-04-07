@@ -237,3 +237,4 @@ data/processed/simulation_cache/*
 !data/processed/simulation_cache/regional_odds_west.csv
 !data/processed/simulation_cache/regional_odds_south.csv
 !data/processed/simulation_cache/regional_odds_midwest.csv
+!data/raw/2026_bracket_results.csv
