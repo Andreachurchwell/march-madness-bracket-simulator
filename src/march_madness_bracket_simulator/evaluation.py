@@ -139,11 +139,6 @@ def evaluate_bracket_summary(
         ~comparison["correct"],
         [
             "round",
-            "region",
-            "team1_predicted",
-            "team2_predicted",
-            "team1_actual",
-            "team2_actual",
             "predicted_winner",
             "winner",
         ],
