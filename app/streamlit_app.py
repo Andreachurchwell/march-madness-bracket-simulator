@@ -1439,8 +1439,9 @@ def render_evaluation_section(
         panel(
             "Monte Carlo Check",
             "After The Tournament",
-            f"The most common simulated champion was {monte_carlo_summary['simulation_favorite']} "
-            f"at about {monte_carlo_summary['simulation_favorite_odds_pct']:.1f}%. "
+            f"The consensus Monte Carlo bracket also finished {consensus_eval['overall_correct']} for "
+            f"{consensus_eval['overall_games']}, but its projected champion was "
+            f"{monte_carlo_summary['simulation_favorite']} instead of {consensus_eval['actual_champion']}. "
             f"{actual_rank_text}",
         )
         st.dataframe(consensus_eval["round_summary"], width="stretch", hide_index=True)
@@ -1454,8 +1455,9 @@ def render_evaluation_section(
     )
     st.write(
         f"The deterministic bracket correctly landed the national champion with {baseline_eval['predicted_champion']}. "
-        f"The simulation favorite was {monte_carlo_summary['simulation_favorite']}, which shows how the most likely "
-        f"single champion in simulation was not the same as the eventual winner."
+        f"The consensus Monte Carlo bracket tied the baseline on total correct picks, but it missed the champion. "
+        f"At the same time, the full simulation still treated {consensus_eval['actual_champion']} as a real contender, "
+        f"ranking them #{monte_carlo_summary['actual_champion_rank']} in title odds."
     )
 
     missed_left, missed_right = st.columns(2)
