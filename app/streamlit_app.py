@@ -925,11 +925,11 @@ def render_round_comparison_chart(
 
     chart = (
         alt.Chart(chart_df)
-        .mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
+        .mark_bar(cornerRadiusEnd=6)
         .encode(
-            x=alt.X("round:N", sort=round_order, title="Round", axis=alt.Axis(labelAngle=0)),
-            xOffset=alt.XOffset("approach:N"),
-            y=alt.Y("correct_picks:Q", title="Correct Picks"),
+            y=alt.Y("round:N", sort=round_order, title=None),
+            yOffset=alt.YOffset("approach:N"),
+            x=alt.X("correct_picks:Q", title="Correct Picks"),
             color=alt.Color(
                 "approach:N",
                 scale=alt.Scale(
@@ -944,14 +944,17 @@ def render_round_comparison_chart(
                 alt.Tooltip("correct_picks:Q", title="Correct picks"),
             ],
         )
-        .properties(height=320)
-        .configure_view(strokeOpacity=0)
+        .properties(height=260, background="#121926")
+        .configure_view(strokeWidth=0)
         .configure_axis(
             labelColor="#cbd5e1",
-            titleColor="#e2e8f0",
-            gridColor="rgba(148, 163, 184, 0.18)",
+            titleColor="#f8fafc",
+            gridColor="rgba(148,163,184,0.15)",
+            domainColor="rgba(148,163,184,0.25)",
+            tickColor="rgba(148,163,184,0.25)",
         )
-        .configure_legend(labelColor="#e2e8f0")
+        .configure_legend(labelColor="#cbd5e1", titleColor="#f8fafc")
+        .configure_title(color="#f8fafc")
     )
     st.altair_chart(chart, width="stretch", theme=None)
 
