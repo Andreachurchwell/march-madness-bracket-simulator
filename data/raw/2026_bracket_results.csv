@@ -1,0 +1,81 @@
+round,region,team1,team2,team1_score,team2_score,winner
+First Round,East,Duke,Siena,71,65,Duke
+First Round,East,Ohio State,TCU,64,66,TCU
+First Round,East,St John's,Northern Iowa,79,53,St John's
+First Round,East,Kansas,Cal Baptist,68,60,Kansas
+First Round,East,Louisville,South Florida,83,79,Louisville
+First Round,East,Michigan State,North Dakota State,92,67,Michigan State
+First Round,East,UCLA,UCF,75,71,UCLA
+First Round,East,UConn,Furman,82,71,UConn
+
+Second Round,East,Duke,TCU,81,58,Duke
+Second Round,East,St John's,Kansas,67,65,St John's
+Second Round,East,Michigan State,Louisville,77,69,Michigan State
+Second Round,East,UConn,UCLA,73,57,UConn
+
+Sweet 16,East,Duke,St John's,80,75,Duke
+Sweet 16,East,UConn,Michigan State,67,63,UConn
+
+Elite 8,East,Duke,UConn,72,73,UConn
+
+First Round,South,Florida,Prairie View A&M,114,55,Florida
+First Round,South,Clemson,Iowa,61,67,Iowa
+First Round,South,Vanderbilt,McNeese,78,68,Vanderbilt
+First Round,South,Nebraska,Troy,76,47,Nebraska
+First Round,South,North Carolina,VCU,78,82,VCU
+First Round,South,Illinois,Penn,105,70,Illinois
+First Round,South,Saint Mary's,Texas A&M,50,63,Texas A&M
+First Round,South,Houston,Idaho,78,47,Houston
+
+Second Round,South,Florida,Iowa,72,73,Iowa
+Second Round,South,Vanderbilt,Nebraska,72,74,Nebraska
+Second Round,South,VCU,Illinois,55,76,Illinois
+Second Round,South,Texas A&M,Houston,57,88,Houston
+
+Sweet 16,South,Iowa,Nebraska,77,71,Iowa
+Sweet 16,South,Illinois,Houston,65,55,Illinois
+
+Elite 8,South,Iowa,Illinois,59,71,Illinois
+
+First Round,West,Arizona,Long Island,92,58,Arizona
+First Round,West,Villanova,Utah State,76,86,Utah State
+First Round,West,Wisconsin,High Point,82,83,High Point
+First Round,West,Arkansas,Hawaii,97,78,Arkansas
+First Round,West,BYU,Texas,71,79,Texas
+First Round,West,Gonzaga,Kennesaw State,73,64,Gonzaga
+First Round,West,Miami (FL),Missouri,80,66,Miami (FL)
+First Round,West,Purdue,Queens (NC),104,71,Purdue
+
+Second Round,West,Arizona,Utah State,78,66,Arizona
+Second Round,West,High Point,Arkansas,88,94,Arkansas
+Second Round,West,Texas,Gonzaga,74,68,Texas
+Second Round,West,Miami (FL),Purdue,69,79,Purdue
+
+Sweet 16,West,Arizona,Arkansas,109,88,Arizona
+Sweet 16,West,Texas,Purdue,77,79,Purdue
+
+Elite 8,West,Arizona,Purdue,79,64,Arizona
+
+First Round,Midwest,Michigan,Howard,101,80,Michigan
+First Round,Midwest,Georgia,Saint Louis,77,102,Saint Louis
+First Round,Midwest,Texas Tech,Akron,91,71,Texas Tech
+First Round,Midwest,Alabama,Hofstra,90,70,Alabama
+First Round,Midwest,Tennessee,Miami (OH),78,56,Tennessee
+First Round,Midwest,Virginia,Wright State,82,73,Virginia
+First Round,Midwest,Kentucky,Santa Clara,89,84,Kentucky
+First Round,Midwest,Iowa State,Tennessee State,108,74,Iowa State
+
+Second Round,Midwest,Michigan,Saint Louis,95,72,Michigan
+Second Round,Midwest,Texas Tech,Alabama,65,90,Alabama
+Second Round,Midwest,Tennessee,Virginia,79,72,Tennessee
+Second Round,Midwest,Kentucky,Iowa State,63,82,Iowa State
+
+Sweet 16,Midwest,Michigan,Alabama,90,77,Michigan
+Sweet 16,Midwest,Tennessee,Iowa State,76,62,Tennessee
+
+Elite 8,Midwest,Michigan,Tennessee,95,62,Michigan
+
+Final Four,None,UConn,Illinois,71,62,UConn
+Final Four,None,Arizona,Michigan,73,91,Michigan
+
+Championship,None,UConn,Michigan,63,69,Michigan
