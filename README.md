@@ -2,7 +2,7 @@
 
 # Andrea's Bracket Breakdown
 
-### March Madness bracket prediction, simulation, and upset analysis
+### March Madness bracket prediction, simulation, and post-tournament evaluation
 
 <br>
 
@@ -20,7 +20,7 @@
 
 ---
 
-## 🏀 Overview
+## Overview
 
 Andrea's Bracket Breakdown is a men's March Madness project built to compare two ways of reading the tournament:
 
@@ -36,7 +36,7 @@ The goal is not just to pick one bracket. It is to understand:
 
 ---
 
-## 🎥 Video Walkthrough
+## Video Walkthrough
 
 Watch the project walkthrough here:
 
@@ -50,16 +50,15 @@ Try the deployed Streamlit app here:
 
 [Andrea's Bracket Breakdown](https://march-madness-bracket-simulator-aagsrgemhfrs8ibkjjqcme.streamlit.app/)
 
-
 ---
 
-## 📂 Data
+## Data
 
 Main source:
 
 - Kaggle `march-machine-learning-mania-2026`
 
-This project uses men's NCAA tournament data from the Kaggle March Machine Learning Mania 2026 competition dataset. The raw historical source files come from Kaggle, while `data/raw/bracket_2026.csv` and the cached simulation outputs in `data/processed/simulation_cache/` were generated for this project.
+This project uses men's NCAA tournament data from the Kaggle March Machine Learning Mania 2026 competition dataset. The raw historical source files come from Kaggle, while `data/raw/bracket_2026.csv`, `data/raw/2026_bracket_results.csv`, and the cached simulation outputs in `data/processed/simulation_cache/` were generated for this project.
 
 Men's files used:
 
@@ -69,13 +68,14 @@ Men's files used:
 - `MNCAATourneySeeds.csv`
 - `MNCAATourneySlots.csv`
 
-Project-specific bracket file:
+Project-specific files:
 
 - `data/raw/bracket_2026.csv`
+- `data/raw/2026_bracket_results.csv`
 
 ---
 
-## 🧠 Model
+## Model
 
 The baseline model is a logistic regression trained on historical NCAA tournament matchups.
 
@@ -93,9 +93,9 @@ Held-out baseline performance:
 
 ---
 
-## 📊 Current Results
+## Results
 
-### Deterministic Bracket
+### Pre-Tournament Baseline Bracket
 
 <p>
   <img src="assets/duke.png" alt="Duke" width="28">
@@ -112,7 +112,7 @@ Held-out baseline performance:
 | Midwest | `Michigan` |
 | National Champion | `Michigan` |
 
-### Monte Carlo Title Odds
+### Pre-Tournament Monte Carlo Title Odds
 
 From `1000` full tournament simulations:
 
@@ -134,11 +134,29 @@ From `1000` full tournament simulations:
 | `Iowa St.` | about `6.7%` |
 | `Saint Louis` | about `6.0%` |
 
-One of the main project takeaways is that the deterministic bracket picked `Michigan`, while the most common simulated champion was `Duke`.
+One of the main pre-tournament takeaways was that the deterministic bracket picked `Michigan`, while the most common simulated champion was `Duke`.
+
+### Post-Tournament Evaluation
+
+After the 2026 tournament finished, I added an evaluation view to compare the deterministic baseline bracket and the consensus Monte Carlo bracket against the real results.
+
+Baseline deterministic bracket:
+
+- `42 / 63` correct picks
+- `66.7%` overall accuracy
+- correctly picked `Michigan` as the national champion
+
+Consensus Monte Carlo bracket:
+
+- `42 / 63` correct picks
+- `66.7%` overall accuracy
+- did **not** pick the eventual champion in the consensus path
+
+The two approaches ended up tied on total correct picks, but they got there differently. The Monte Carlo consensus bracket did a little better in some early rounds, while the deterministic bracket held up better late and correctly landed the championship outcome.
 
 ---
 
-## ✨ App
+## App
 
 The Streamlit app currently shows:
 
@@ -149,17 +167,17 @@ The Streamlit app currently shows:
 - regional win odds
 - round-1 upset watch
 - one random tournament run
-
+- a post-tournament evaluation section that compares the baseline and Monte Carlo results to the actual 2026 bracket
 
 ---
 
-## 🎯 Main Question
+## Main Question
 
 If I simulate the NCAA tournament over and over using matchup-based team features, which teams, upsets, and sleeper runs keep showing up?
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```text
 march-madness-bracket-simulator/
@@ -167,10 +185,12 @@ march-madness-bracket-simulator/
 |- assets/
 |- data/
 |- notebooks/
+|- scripts/
 |- src/
 |  \- march_madness_bracket_simulator/
 |     |- analysis.py
 |     |- data_loader.py
+|     |- evaluation.py
 |     |- feature_engineering.py
 |     |- model.py
 |     |- simulator.py
@@ -180,12 +200,13 @@ march-madness-bracket-simulator/
 |- projectnotes.md
 |- andrea.md
 |- pyproject.toml
+|- requirements.txt
 \- uv.lock
 ```
 
 ---
 
-## 🚀 Setup
+## Setup
 
 This project uses `uv` and Python `3.11+`.
 
@@ -253,7 +274,7 @@ Notes for deployment:
 
 ---
 
-## 💖 Why This Project
+## Why This Project
 
 March Madness is one of the most fun and chaotic things to try to predict because one bracket can look completely different from another just from a few close games flipping.
 
@@ -274,7 +295,7 @@ That is a big part of why I wanted to make this project. I wanted to see if I co
 
 ---
 
-## ⚠️ Limitations
+## Limitations
 
 This project is still a baseline model, so there are several important things it does not capture yet:
 
@@ -286,22 +307,21 @@ This project is still a baseline model, so there are several important things it
 
 ---
 
-## 🌟 Next Steps
+## Next Steps
 
-- compare the model's bracket predictions against the real tournament results once March Madness is finished
-- see which teams or regions the model handled well and where it missed
-- define sleeper teams more explicitly from simulation outputs
-- record a project walkthrough video
+- compare the deterministic bracket and Monte Carlo consensus bracket more directly in the app
+- add more polished post-tournament visualizations for misses, round-by-round performance, and champion evaluation
+- improve the model with stronger team features beyond the current baseline set
+- explore whether simulation-based signals can identify sleeper teams more clearly before the tournament starts
 
 ---
 
-## 🤖 AI Assistance
+## AI Assistance
 
 I used OpenAI tools to help with debugging, refactoring, and explaining parts of the project while I built the bracket simulator, simulation pipeline, and Streamlit app. The project design, modeling choices, implementation decisions, and final review were still my responsibility.
 
-
 ---
 
-## 👩‍💻 Author
+## Author
 
 Andrea Churchwell
