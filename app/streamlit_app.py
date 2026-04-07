@@ -15,6 +15,12 @@ from march_madness_bracket_simulator.analysis import (
     summarize_champion_odds,
 )
 from march_madness_bracket_simulator.data_loader import load_core_march_madness_data
+from march_madness_bracket_simulator.evaluation import (
+    evaluate_bracket_summary,
+    load_actual_results,
+    summarize_monte_carlo,
+    validate_results_teams,
+)
 from march_madness_bracket_simulator.feature_engineering import build_team_season_features
 from march_madness_bracket_simulator.simulator import simulate_full_tournament_once
 
@@ -29,6 +35,7 @@ ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"
 LOGO_PATH = ASSETS_DIR / "logo.webp"
 HERO_PATH = ASSETS_DIR / "marchM.png"
 SIMULATION_CACHE_DIR = Path(__file__).resolve().parents[1] / "data" / "processed" / "simulation_cache"
+ACTUAL_RESULTS_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "2026_bracket_results.csv"
 TEAM_LOGO_MAP = {
     "Akron": ASSETS_DIR / "akron.png",
     "Alabama": ASSETS_DIR / "bama.png",
@@ -1270,6 +1277,13 @@ def annotate_team_odds(odds_df: pd.DataFrame, bracket_2026: pd.DataFrame) -> pd.
 
 
 @st.cache_data
+def load_actual_results_data() -> pd.DataFrame | None:
+    if not ACTUAL_RESULTS_PATH.exists():
+        return None
+    return load_actual_results(ACTUAL_RESULTS_PATH)
+
+
+@st.cache_data
 def load_app_data():
     data = load_core_march_madness_data()
     team_features = build_team_season_features(data["regular_season"])
@@ -1365,6 +1379,92 @@ def load_app_data():
         features_latest,
         model,
     )
+
+
+def render_evaluation_section(
+    *,
+    bracket_2026: pd.DataFrame,
+    deterministic_bracket: dict[str, object],
+    consensus_bracket: dict[str, object],
+    champion_odds: pd.DataFrame,
+) -> None:
+    actual_results = load_actual_results_data()
+    if actual_results is None:
+        st.info("Add `data/raw/2026_bracket_results.csv` to show the post-tournament evaluation section.")
+        return
+
+    bracket_teams = set(bracket_2026["team"].dropna())
+    unknown_in_results, missing_from_results = validate_results_teams(bracket_teams, actual_results)
+    if unknown_in_results or missing_from_results:
+        st.warning("The 2026 results file has team names that do not line up with the bracket input yet.")
+        if unknown_in_results:
+            st.write("Results-only names:", ", ".join(unknown_in_results))
+        if missing_from_results:
+            st.write("Bracket-only names:", ", ".join(missing_from_results))
+        return
+
+    baseline_eval = evaluate_bracket_summary(
+        deterministic_bracket,
+        actual_results,
+        winner_field="predicted_winner",
+        champion_field="champion",
+    )
+    monte_carlo_summary = summarize_monte_carlo(
+        consensus_bracket=consensus_bracket,
+        champion_odds=champion_odds,
+        actual_results=actual_results,
+    )
+    consensus_eval = monte_carlo_summary["consensus_eval"]
+
+    overview_left, overview_right = st.columns(2)
+
+    with overview_left:
+        panel(
+            "Baseline Result Check",
+            "After The Tournament",
+            f"The deterministic bracket finished {baseline_eval['overall_correct']} for {baseline_eval['overall_games']} "
+            f"for an accuracy of {baseline_eval['overall_accuracy']:.1%}. "
+            f"It picked {baseline_eval['predicted_champion']} and the actual champion was {baseline_eval['actual_champion']}.",
+        )
+        st.dataframe(baseline_eval["round_summary"], width="stretch", hide_index=True)
+
+    with overview_right:
+        actual_rank = monte_carlo_summary["actual_champion_rank"]
+        actual_rank_text = (
+            f"The actual champion ranked #{actual_rank} in the Monte Carlo title odds at about "
+            f"{monte_carlo_summary['actual_champion_odds_pct']:.1f}%."
+            if actual_rank is not None
+            else "The actual champion did not appear in the top Monte Carlo title odds table."
+        )
+        panel(
+            "Monte Carlo Check",
+            "After The Tournament",
+            f"The most common simulated champion was {monte_carlo_summary['simulation_favorite']} "
+            f"at about {monte_carlo_summary['simulation_favorite_odds_pct']:.1f}%. "
+            f"{actual_rank_text}",
+        )
+        st.dataframe(consensus_eval["round_summary"], width="stretch", hide_index=True)
+
+    st.markdown("### What Changed Once Games Were Played")
+    st.write(
+        f"The baseline held up best in the First Round at {baseline_eval['round_summary'].iloc[0]['accuracy']:.1%}, "
+        f"then got less stable in later rounds. The consensus Monte Carlo bracket finished "
+        f"{consensus_eval['overall_correct']} for {consensus_eval['overall_games']} "
+        f"for an accuracy of {consensus_eval['overall_accuracy']:.1%}."
+    )
+    st.write(
+        f"The deterministic bracket correctly landed the national champion with {baseline_eval['predicted_champion']}. "
+        f"The simulation favorite was {monte_carlo_summary['simulation_favorite']}, which shows how the most likely "
+        f"single champion in simulation was not the same as the eventual winner."
+    )
+
+    missed_left, missed_right = st.columns(2)
+    with missed_left:
+        st.markdown("#### Baseline Misses")
+        st.dataframe(baseline_eval["missed_games"], width="stretch", hide_index=True)
+    with missed_right:
+        st.markdown("#### Consensus Misses")
+        st.dataframe(consensus_eval["missed_games"], width="stretch", hide_index=True)
 
 
 def main() -> None:
@@ -1590,6 +1690,25 @@ def main() -> None:
         "These are the round-1 games where the favorite is most vulnerable, so this is the quickest place to look for toss-ups and upset chances.",
     )
     render_upset_watch_chart(round1_predictions)
+
+    st.write("")
+
+    if st.button("Show 2026 Post-Tournament Evaluation"):
+        st.session_state["show_2026_evaluation"] = not st.session_state.get("show_2026_evaluation", False)
+
+    if st.session_state.get("show_2026_evaluation", False):
+        st.write("")
+        panel(
+            "2026 Results Check",
+            "Post-Tournament Review",
+            "This section compares the deterministic bracket and the consensus Monte Carlo picture against the actual 2026 tournament results.",
+        )
+        render_evaluation_section(
+            bracket_2026=bracket_2026,
+            deterministic_bracket=deterministic_bracket,
+            consensus_bracket=consensus_bracket,
+            champion_odds=champion_odds,
+        )
 
 
 if __name__ == "__main__":
