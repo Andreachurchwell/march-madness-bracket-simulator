@@ -1,7 +1,7 @@
 """Feature engineering logic for matchup-based team comparisons."""
 import pandas as pd
 
-
+# backend files where I built the feature engineering logic. It takes the regular season results and rolls them up into team-level features like wins, losses, win percentage, average points scored, average points allowed, and scoring margin.
 def build_team_season_features(regular_season_results: pd.DataFrame) -> pd.DataFrame:
     wins = (
         regular_season_results.groupby(["Season", "WTeamID"])
