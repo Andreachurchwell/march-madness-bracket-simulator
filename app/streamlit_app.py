@@ -1550,6 +1550,7 @@ def main() -> None:
         st.markdown("- 1000-simulation title odds")
         st.markdown("- Sleeper and takeaway cards")
         st.markdown("- One random tournament run")
+        st.markdown("- Post-tournament evaluation")
 
     hero_logo_html = ""
     if HERO_PATH.exists():
